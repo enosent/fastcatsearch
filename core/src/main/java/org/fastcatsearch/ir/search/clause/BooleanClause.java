@@ -160,8 +160,8 @@ public class BooleanClause extends OperatedClause {
 				token = new CharVector(termAttribute.buffer(), 0, termAttribute.length(), indexSetting.isIgnoreCase());
 			}
 			
-			logger.debug("token > {}, isIgnoreCase = {} analyzer= {}", token, token.isIgnoreCase(), analyzer.getClass().getSimpleName());
 			queryPosition = positionAttribute != null ? positionAttribute.getPositionIncrement() : 0;
+            logger.debug("token > {} queryPosition = {}, isIgnoreCase = {} analyzer= {}", token, queryPosition, token.isIgnoreCase(), analyzer.getClass().getSimpleName());
 //			logger.debug("token = {} : {}", token, queryPosition);
 
 			SearchMethod searchMethod = searchIndexReader.createSearchMethod(new NormalSearchMethod());
@@ -182,7 +182,7 @@ public class BooleanClause extends OperatedClause {
 				queryDepth ++;
 			} else {
 				if(type == Type.ALL){
-					operatedClause = new AndOperatedClause(clause, operatedClause, proximity);
+					operatedClause = new AndOperatedClause(operatedClause, clause, proximity);
 					queryDepth ++;
 				}else if(type == Type.ANY){
 					operatedClause = new OrOperatedClause(operatedClause, clause, proximity);
@@ -202,7 +202,7 @@ public class BooleanClause extends OperatedClause {
 					clause = new TermOperatedClause(indexId, localToken.toString(), postingReader, termSequence.getAndIncrement());
 					
 					if(synonymAttribute!=null) {
-						clause = this.applySynonym(clause, searchIndexReader, synonymAttribute, indexId, queryPosition, termSequence, type); 
+						clause = this.applySynonym(clause, searchIndexReader, synonymAttribute, indexId, queryPosition, termSequence, type);
 					}
 					if ((offsetAttribute.startOffset() == 0 &&
 						offsetAttribute.endOffset() == fullTerm.length())) {
