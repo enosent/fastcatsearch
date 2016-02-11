@@ -38,13 +38,17 @@ public class TermOperatedClause extends OperatedClause {
 	public TermOperatedClause(String indexId, String termString, PostingReader postingReader, int termSequence) throws IOException {
 		super(indexId);
 		this.termString = termString;
+
 		if (postingReader != null) {
 			this.postingReader = postingReader;
 			this.segmentDF = postingReader.size();
 			this.documentCount = postingReader.documentCount();
 			//termString = postingReader.term().toString();
 			this.termSequence = termSequence;
-		}
+            logger.debug(">>>>>>>>>> {} [{}]", termString, postingReader.termPosition());
+		} else {
+            logger.debug(">>>>>>>>>> {} XXX", termString);
+        }
 	}
 
 	protected boolean nextDoc(RankInfo rankInfo) {
