@@ -18,7 +18,9 @@ package org.fastcatsearch.ir.search.clause;
 
 import org.fastcatsearch.ir.query.RankInfo;
 
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Writer;
 
 public class AndOperatedClause extends OperatedClause {
 	private OperatedClause clause1;
@@ -144,28 +146,27 @@ public class AndOperatedClause extends OperatedClause {
 	}
 	
 	@Override
-	public void printTrace(PrintStream os, int depth) {
-		int indentSize = 4;
-		String indent = "";
+	public void printTrace(Writer writer, int indent, int depth) throws IOException {
+		String indentSpace = "";
 		if(depth > 0){
-			for (int i = 0; i < (depth - 1) * indentSize; i++) {
-				indent += " ";
+			for (int i = 0; i < (depth - 1) * indent; i++) {
+                indentSpace += " ";
 			}
 			
-			for (int i = (depth - 1) * indentSize, p = 0; i < depth * indentSize; i++, p++) {
+			for (int i = (depth - 1) * indent, p = 0; i < depth * indent; i++, p++) {
 				if(p == 0){
-					indent += "|";
+                    indentSpace += "|";
 				}else{
-					indent += "-";
+                    indentSpace += "-";
 				}
 			}
 		}
-		os.println(indent+"[AND]");
+        writer.append(indentSpace).append("[AND]\n");
 		if(clause1 != null){
-			clause1.printTrace(os, depth + 1);
+			clause1.printTrace(writer, indent, depth + 1);
 		}
 		if(clause2 != null){
-			clause2.printTrace(os, depth + 1);
+			clause2.printTrace(writer, indent, depth + 1);
 		}
 	}
 	

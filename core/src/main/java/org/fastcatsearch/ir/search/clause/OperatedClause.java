@@ -21,7 +21,9 @@ import org.fastcatsearch.ir.search.ClauseExplanation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Writer;
 
 
 public abstract class OperatedClause {
@@ -114,7 +116,7 @@ public abstract class OperatedClause {
 		return null;
 	}
 	
-	public abstract void printTrace(PrintStream os, int depth);
+	public abstract void printTrace(Writer writer, int indent, int depth) throws IOException;
 
     public int getPosition() {
         return position;

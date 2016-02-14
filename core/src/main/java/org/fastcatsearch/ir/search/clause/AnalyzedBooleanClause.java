@@ -14,9 +14,7 @@ import org.fastcatsearch.ir.search.method.SearchMethod;
 import org.fastcatsearch.ir.settings.IndexRefSetting;
 import org.fastcatsearch.ir.settings.IndexSetting;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -50,11 +48,10 @@ public class AnalyzedBooleanClause extends OperatedClause {
 		try {
 			operatedClause = search(indexId, termsEntryList, term.type(), indexSetting);
             if(logger.isDebugEnabled()) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                PrintStream stream = new PrintStream(baos);
-                stream.println();
-                printTrace(stream, 0);
-                logger.debug("AnalyzedBooleanClause : {}", baos.toString());
+                StringWriter writer = new StringWriter();
+                writer.append("\n");
+                printTrace(writer, 4, 0);
+                logger.debug("AnalyzedBooleanClause : {}", writer.toString());
             }
 		} catch (IOException e) {
 			logger.error("", e);
@@ -161,27 +158,25 @@ public class AnalyzedBooleanClause extends OperatedClause {
 	}
 
 	@Override
-	public void printTrace(PrintStream os, int depth) { 
-		int indentSize = 4;
-		String indent = "";
-		if(depth > 0){
-			for (int i = 0; i < (depth - 1) * indentSize; i++) {
-				indent += " ";
-			}
-			
-			for (int i = (depth - 1) * indentSize, p = 0; i < depth * indentSize; i++, p++) {
-				if(p == 0){
-					indent += "|";
-				}else{
-					indent += "-";
-				}
-			}
-		}
-		os.println(indent+"[ROOT]");
-        if(operatedClause != null) {
-            operatedClause.printTrace(os, depth + 1);
+    public void printTrace(Writer writer, int indent, int depth) throws IOException {
+        String indentSpace = "";
+        if(depth > 0){
+            for (int i = 0; i < (depth - 1) * indent; i++) {
+                indentSpace += " ";
+            }
+
+            for (int i = (depth - 1) * indent, p = 0; i < depth * indent; i++, p++) {
+                if(p == 0){
+                    indentSpace += "|";
+                }else{
+                    indentSpace += "-";
+                }
+            }
         }
-		
-	}
+        writer.append(indentSpace).append("[ROOT]\n");
+        if(operatedClause != null) {
+            operatedClause.printTrace(writer, indent, depth + 1);
+        }
+    }
 
 }

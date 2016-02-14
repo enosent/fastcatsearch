@@ -2,6 +2,7 @@ package org.fastcatsearch.ir.search.clause;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -379,24 +380,23 @@ public class BooleanClause extends OperatedClause {
 		return termString;
 	}
 	@Override
-	public void printTrace(PrintStream os, int depth) { 
-		int indentSize = 4;
-		String indent = "";
+	public void printTrace(Writer writer, int indent, int depth) throws IOException {
+		String indentSpace = "";
 		if(depth > 0){
-			for (int i = 0; i < (depth - 1) * indentSize; i++) {
-				indent += " ";
+			for (int i = 0; i < (depth - 1) * indent; i++) {
+				indentSpace += " ";
 			}
 			
-			for (int i = (depth - 1) * indentSize, p = 0; i < depth * indentSize; i++, p++) {
+			for (int i = (depth - 1) * indent, p = 0; i < depth * indent; i++, p++) {
 				if(p == 0){
-					indent += "|";
+                    indentSpace += "|";
 				}else{
-					indent += "-";
+                    indentSpace += "-";
 				}
 			}
 		}
-		os.println(indent+"[OR]");
-		operatedClause.printTrace(os, depth + 1);
+        writer.append(indentSpace).append("[OR]");
+		operatedClause.printTrace(writer, indent, depth + 1);
 		
 	}
 	

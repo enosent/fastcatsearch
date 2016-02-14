@@ -16,7 +16,9 @@
 
 package org.fastcatsearch.ir.search.clause;
 
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Writer;
 
 import org.fastcatsearch.ir.query.RankInfo;
 
@@ -125,31 +127,30 @@ public class LOrOperatedClause extends OperatedClause {
 		hasNext2 = clause2.next(docInfo2);
 	}
 
-	@Override
-	public void printTrace(PrintStream os, int depth) {
-		int indentSize = 4;
-		String indent = "";
-		if(depth > 0){
-			for (int i = 0; i < (depth - 1) * indentSize; i++) {
-				indent += " ";
-			}
-			
-			for (int i = (depth - 1) * indentSize, p = 0; i < depth * indentSize; i++, p++) {
-				if(p == 0){
-					indent += "|";
-				}else{
-					indent += "-";
-				}
-			}
-		}
-		os.println(indent+"[LOR]");
-		if(clause1 != null){
-			clause1.printTrace(os, depth + 1);
-		}
-		if(clause2 != null){
-			clause2.printTrace(os, depth + 1);
-		}
-	}
+    @Override
+    public void printTrace(Writer writer, int indent, int depth) throws IOException {
+        String indentSpace = "";
+        if(depth > 0){
+            for (int i = 0; i < (depth - 1) * indent; i++) {
+                indentSpace += " ";
+            }
+
+            for (int i = (depth - 1) * indent, p = 0; i < depth * indent; i++, p++) {
+                if(p == 0){
+                    indentSpace += "|";
+                }else{
+                    indentSpace += "-";
+                }
+            }
+        }
+        writer.append(indentSpace).append("[LOR]\n");
+        if(clause1 != null){
+            clause1.printTrace(writer, indent, depth + 1);
+        }
+        if(clause2 != null){
+            clause2.printTrace(writer, indent, depth + 1);
+        }
+    }
 
 	@Override
 	public OperatedClause[] children() {

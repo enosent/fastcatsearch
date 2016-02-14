@@ -2,6 +2,7 @@ package org.fastcatsearch.ir.search.clause;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,25 +72,23 @@ public class PkScoreOperatedClause extends OperatedClause {
 	}
 
 	@Override
-	public void printTrace(PrintStream os, int depth) {
-		int indentSize = 4;
-		String indent = "";
-		if(depth > 0){
-			for (int i = 0; i < (depth - 1) * indentSize; i++) {
-				indent += " ";
-			}
-			
-			for (int i = (depth - 1) * indentSize, p = 0; i < depth * indentSize; i++, p++) {
-				if(p == 0){
-					indent += "|";
-				}else{
-					indent += "-";
-				}
-			}
-		}
-		
-		os.println(indent+"[PkScore] "+keyword+" [" + docNoList.size() + "] " + id);
-		
-	}
+    public void printTrace(Writer writer, int indent, int depth) throws IOException {
+        String indentSpace = "";
+        if(depth > 0){
+            for (int i = 0; i < (depth - 1) * indent; i++) {
+                indentSpace += " ";
+            }
+
+            for (int i = (depth - 1) * indent, p = 0; i < depth * indent; i++, p++) {
+                if(p == 0){
+                    indentSpace += "|";
+                }else{
+                    indentSpace += "-";
+                }
+            }
+        }
+        writer.append(indentSpace).append("[PkScore] ").append(keyword).append(" [").append(String.valueOf(docNoList.size())).append("] ").append(id).append("\n");
+
+    }
 
 }

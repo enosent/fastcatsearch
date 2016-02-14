@@ -2,198 +2,300 @@ package org.fastcatsearch.ir.search.clause;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.core.AnalyzerOption;
+import org.apache.lucene.analysis.tokenattributes.AdditionalTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.CharsRefTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.FeatureAttribute;
-import org.apache.lucene.analysis.tokenattributes.FeatureAttribute.FeatureType;
+import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.StopwordAttribute;
 import org.apache.lucene.analysis.tokenattributes.SynonymAttribute;
+import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
 import org.apache.lucene.util.CharsRef;
 import org.fastcatsearch.ir.io.CharVector;
-import org.fastcatsearch.ir.io.CharVectorTokenizer;
 import org.fastcatsearch.ir.query.HighlightInfo;
 import org.fastcatsearch.ir.query.RankInfo;
 import org.fastcatsearch.ir.query.Term;
 import org.fastcatsearch.ir.query.Term.Option;
+import org.fastcatsearch.ir.query.Term.Type;
 import org.fastcatsearch.ir.search.PostingReader;
 import org.fastcatsearch.ir.search.SearchIndexReader;
 import org.fastcatsearch.ir.search.method.NormalSearchMethod;
 import org.fastcatsearch.ir.search.method.SearchMethod;
 import org.fastcatsearch.ir.settings.IndexRefSetting;
 import org.fastcatsearch.ir.settings.IndexSetting;
+import org.fastcatsearch.ir.util.CharVectorUtils;
 
 public class PhraseClause extends OperatedClause {
 
-	private MultiTermOperatedClause operatedClause;
+    private String termString;
+    private SearchIndexReader searchIndexReader;
+    private OperatedClause operatedClause;
+    private int weight;
 
-	public PhraseClause(SearchIndexReader searchIndexReader, Term term, HighlightInfo highlightInfo) {
-		super(searchIndexReader.indexId());
-		String indexId = searchIndexReader.indexId();
-		String termString = term.termString();
-		int weight = term.weight();
-		Option option = term.option();
+    public PhraseClause(SearchIndexReader searchIndexReader, Term term, HighlightInfo highlightInfo) {
+        super(searchIndexReader.indexId());
+        this.searchIndexReader = searchIndexReader;
+        String indexId = searchIndexReader.indexId();
+        String termString = term.termString();
+        this.termString = termString;
+        this.weight = term.weight();
+        Option searchOption = term.option();
+        CharVector fullTerm = new CharVector(termString);
+        Analyzer analyzer = searchIndexReader.getQueryAnalyzerFromPool();
 
-		CharVector fullTerm = new CharVector(termString);
-		Analyzer analyzer = searchIndexReader.getQueryAnalyzerFromPool();
+        IndexSetting indexSetting = searchIndexReader.indexSetting();
+        if (highlightInfo != null && searchOption.useHighlight()) {
+            String queryAnalyzerId = indexSetting.getQueryAnalyzer();
+            for (IndexRefSetting refSetting : indexSetting.getFieldList()) {
+                highlightInfo.add(refSetting.getRef(), refSetting.getIndexAnalyzer(), queryAnalyzerId, term.termString(), searchOption.value());
+            }
+        }
+        try {
+            //검색옵션에 따라 analyzerOption도 수정.
+            AnalyzerOption analyzerOption = new AnalyzerOption();
+            analyzerOption.useStopword(searchOption.useStopword());
+            analyzerOption.useSynonym(searchOption.useSynonym());
+            analyzerOption.setForQuery();
 
-		IndexSetting indexSetting = searchIndexReader.indexSetting();
-		if (highlightInfo != null) {
-			String queryAnalyzerId = indexSetting.getQueryAnalyzer();
-			for (IndexRefSetting refSetting : indexSetting.getFieldList()) {
-				highlightInfo.add(refSetting.getRef(), refSetting.getIndexAnalyzer(), queryAnalyzerId, term.termString(),term.option().value());
-			}
-		}
-		
-		operatedClause = new MultiTermOperatedClause(indexId, searchIndexReader.indexFieldOption().isStorePosition());
-		
-		try {
-			CharVectorTokenizer charVectorTokenizer = new CharVectorTokenizer(fullTerm);
-			CharTermAttribute termAttribute = null;
-			CharsRefTermAttribute refTermAttribute = null;
-			PositionIncrementAttribute positionAttribute = null;
-			SynonymAttribute synonymAttribute = null;
-			StopwordAttribute stopwordAttribute = null;
-			FeatureAttribute featureAttribute = null;
-			int positionOffset = 0;
+            operatedClause = search(indexId, fullTerm, term.getProximity(), term.type(), indexSetting, analyzer, analyzerOption);
 
-			// 어절로 분리.
-			while (charVectorTokenizer.hasNext()) {
-				CharVector eojeol = charVectorTokenizer.next();
+        } catch (IOException e) {
+            logger.error("", e);
+        } finally {
+            searchIndexReader.releaseQueryAnalyzerToPool(analyzer);
+        }
+    }
 
-				TokenStream tokenStream = analyzer.tokenStream(indexId, eojeol.getReader());
-				tokenStream.reset();
+    private OperatedClause search(String indexId, CharVector fullTerm, int proximity, Type type, IndexSetting indexSetting, Analyzer analyzer, AnalyzerOption analyzerOption) throws IOException {
+        logger.debug("############ search Term > {}", fullTerm);
+        OperatedClause operatedClause = null;
 
-				if (tokenStream.hasAttribute(CharsRefTermAttribute.class)) {
-					refTermAttribute = tokenStream.getAttribute(CharsRefTermAttribute.class);
-				}
-				if (tokenStream.hasAttribute(CharTermAttribute.class)) {
-					termAttribute = tokenStream.getAttribute(CharTermAttribute.class);
-				}
-				if (tokenStream.hasAttribute(PositionIncrementAttribute.class)) {
-					positionAttribute = tokenStream.getAttribute(PositionIncrementAttribute.class);
-				}
-				CharTermAttribute charTermAttribute = tokenStream.getAttribute(CharTermAttribute.class);
+        CharTermAttribute termAttribute = null;
+        CharsRefTermAttribute refTermAttribute = null;
+        PositionIncrementAttribute positionAttribute = null;
+        StopwordAttribute stopwordAttribute = null;
+        SynonymAttribute synonymAttribute = null;
 
-				if (tokenStream.hasAttribute(SynonymAttribute.class)) {
-					synonymAttribute = tokenStream.getAttribute(SynonymAttribute.class);
-				}
-				if (tokenStream.hasAttribute(StopwordAttribute.class)) {
-					stopwordAttribute = tokenStream.getAttribute(StopwordAttribute.class);
-				}
-				if (tokenStream.hasAttribute(FeatureAttribute.class)) {
-					featureAttribute = tokenStream.getAttribute(FeatureAttribute.class);
-				}
-				// PosTagAttribute tagAttribute =
-				// tokenStream.getAttribute(PosTagAttribute.class);
+        TokenStream tokenStream = analyzer.tokenStream(indexId, fullTerm.getReader(), analyzerOption);
+        tokenStream.reset();
 
-				FeatureType prevType = null;
-				CharVector token = null;
-				while (tokenStream.incrementToken()) {
+        if (tokenStream.hasAttribute(CharsRefTermAttribute.class)) {
+            refTermAttribute = tokenStream.getAttribute(CharsRefTermAttribute.class);
+        }
+        if (tokenStream.hasAttribute(CharTermAttribute.class)) {
+            termAttribute = tokenStream.getAttribute(CharTermAttribute.class);
+        }
+        if (tokenStream.hasAttribute(PositionIncrementAttribute.class)) {
+            positionAttribute = tokenStream.getAttribute(PositionIncrementAttribute.class);
+        }
+        if (tokenStream.hasAttribute(StopwordAttribute.class)) {
+            stopwordAttribute = tokenStream.getAttribute(StopwordAttribute.class);
+        }
+        if (tokenStream.hasAttribute(SynonymAttribute.class)) {
+            synonymAttribute = tokenStream.getAttribute(SynonymAttribute.class);
+        }
 
-					if (refTermAttribute != null) {
-						CharsRef charRef = refTermAttribute.charsRef();
+        CharVector token = null;
+        int termSequence = 0;
 
-						if (charRef != null) {
-							char[] buffer = new char[charRef.length()];
-							System.arraycopy(charRef.chars, charRef.offset, buffer, 0, charRef.length);
-							token = new CharVector(buffer, 0, buffer.length, indexSetting.isIgnoreCase());
-						} else if (termAttribute != null && termAttribute.buffer() != null) {
-							token = new CharVector(termAttribute.buffer(), indexSetting.isIgnoreCase());
-						}
-					} else {
-						token = new CharVector(charTermAttribute.buffer(), 0, charTermAttribute.length(), indexSetting.isIgnoreCase());
-					}
+        int queryPosition = 0;
 
-					// logger.debug("token = {}", token);
-					// token.toUpperCase();
-					//
-					// stopword
-					//
-					if (option.useStopword() && stopwordAttribute != null && stopwordAttribute.isStopword()) {
-						logger.debug("stopword : {}", token);
-						continue;
-					}
-					
-					FeatureType featureType = null;
-					if (featureAttribute != null) {
-						featureType = featureAttribute.type();
-						if (featureType == FeatureType.APPEND) {
-							if (prevType != null && (prevType == FeatureType.MAIN || prevType == FeatureType.APPEND)) {
-								// 이전 타입이 main 또는 계속해서 append이면, 부가점수를 올려준다.
-								// TODO
-							} else {
-								// 버린다. 즉, 검색시 무시된다.
-							}
-						} else {
-							// main 결과 셋으로 사용.
-							// TODO
-						}
-						prevType = featureType;
-					}
+        while (tokenStream.incrementToken()) {
 
-					int queryPosition = 0;
-					if (positionAttribute != null) {
-						int position = positionAttribute.getPositionIncrement();
-						queryPosition = positionOffset + position; //
-						positionOffset = position + 2; // 다음 position은 +2 부터 할당한다. 공백도 1만큼 차지.
-					}
+            if (stopwordAttribute != null && stopwordAttribute.isStopword()) {
+//				logger.debug("stopword");
+                continue;
+            }
 
-					logger.debug("PHRASE TERM {} >> [{}] [{}, {}] ", token, featureType, positionAttribute.getPositionIncrement(), queryPosition);
-					SearchMethod searchMethod = searchIndexReader.createSearchMethod(new NormalSearchMethod());
-					PostingReader postingReader = searchMethod.search(indexId, token, queryPosition, weight);
-//					OperatedClause clause = new TermOperatedClause(postingDocs, weight);
-//					OperatedClause clause = new TermOperatedClause(postingReader);
-					operatedClause.addTerm(postingReader);
+            if (refTermAttribute != null) {
+                CharsRef charRef = refTermAttribute.charsRef();
 
-//					if (operatedClause == null) {
-//						operatedClause = clause;
-//					} else {
-//						operatedClause = new AndOperatedClause(operatedClause, clause);
-//					}
-				}
+                if (charRef != null) {
+                    char[] buffer = new char[charRef.length()];
+                    System.arraycopy(charRef.chars, charRef.offset, buffer, 0, charRef.length);
+                    token = new CharVector(buffer, 0, buffer.length, indexSetting.isIgnoreCase());
+                } else if (termAttribute != null && termAttribute.buffer() != null) {
+                    token = new CharVector(termAttribute.buffer(), indexSetting.isIgnoreCase());
+                }
+            } else {
+                token = new CharVector(termAttribute.buffer(), 0, termAttribute.length(), indexSetting.isIgnoreCase());
+            }
 
-			}
-		} catch (IOException e) {
-			logger.error("", e);
-		} finally {
-			searchIndexReader.releaseQueryAnalyzerToPool(analyzer);
-		}
-	}
+            queryPosition = positionAttribute != null ? positionAttribute.getPositionIncrement() : 0;
+            if(logger.isDebugEnabled()) {
+                logger.debug("token > {} queryPosition = {}, isIgnoreCase = {} analyzer= {}", token, queryPosition, token.isIgnoreCase(), analyzer.getClass().getSimpleName());
+            }
+//			logger.debug("token = {} : {}", token, queryPosition);
 
-	@Override
-	protected boolean nextDoc(RankInfo docInfo) {
-		if (operatedClause == null) {
-			return false;
-		}
-		return operatedClause.next(docInfo);
-	}
+            SearchMethod searchMethod = searchIndexReader.createSearchMethod(new NormalSearchMethod());
+            PostingReader postingReader = searchMethod.search(indexId, token, queryPosition, weight);
 
-	@Override
-	public void close() {
-		if(operatedClause != null){
-			operatedClause.close();
-		}
-	}
+            OperatedClause clause = new TermOperatedClause(indexId, token.toString(), postingReader, termSequence);
+            // 유사어 처리
+            if(synonymAttribute != null) {
+                clause = applySynonym(clause, searchIndexReader, synonymAttribute, indexId, queryPosition, termSequence);
+            }
+            if (operatedClause == null) {
+                operatedClause = clause;
+            } else {
+                operatedClause = new AndOperatedClause(operatedClause, clause, proximity);
+            }
 
-	@Override
-	protected void initClause(boolean explain) {
-		operatedClause.init(explanation != null ? explanation.createSubExplanation() : null);
-	}
+        }
 
-	@Override
-	public void printTrace(PrintStream os, int depth) {
-		// TODO Auto-generated method stub
-	}
+        StringWriter writer = new StringWriter();
+        operatedClause.printTrace(writer, 4, 0);
+        if(logger.isDebugEnabled()) {
+            logger.debug("{}", writer.toString());
+        }
+        return operatedClause;
+    }
 
-//	@Override
-//	protected void initExplanation() {
-//		if(operatedClause != null) {
-//			operatedClause.setExplanation(explanation.createSub1());
-//		}
-//	}
 
+    @Override
+    protected boolean nextDoc(RankInfo rankInfo) {
+        if (operatedClause == null) {
+            return false;
+        }
+        return operatedClause.next(rankInfo);
+    }
+
+    @Override
+    public void close() {
+        if (operatedClause != null) {
+            operatedClause.close();
+        }
+    }
+    @Override
+    protected void initClause(boolean explain) {
+        if (operatedClause != null) {
+            operatedClause.init(explanation != null ? explanation.createSubExplanation() : null);
+        }
+    }
+
+    @Override
+    public String term() {
+        return termString;
+    }
+
+
+    @Override
+    public void printTrace(Writer writer, int indent, int depth) throws IOException {
+        String indentSpace = "";
+        if(depth > 0){
+            for (int i = 0; i < (depth - 1) * indent; i++) {
+                indentSpace += " ";
+            }
+
+            for (int i = (depth - 1) * indent, p = 0; i < depth * indent; i++, p++) {
+                if(p == 0){
+                    indentSpace += "|";
+                }else{
+                    indentSpace += "-";
+                }
+            }
+        }
+        writer.append(indentSpace).append("[PHRASE]\n");
+        operatedClause.printTrace(writer, indent, depth + 1);
+
+    }
+
+
+    private OperatedClause applySynonym(OperatedClause clause,
+                                        SearchIndexReader searchIndexReader,
+                                        SynonymAttribute synonymAttribute, String indexId, int queryPosition,
+                                        int termSequence) throws IOException {
+
+        @SuppressWarnings("unchecked")
+        List<Object> synonymObj = synonymAttribute.getSynonyms();
+        if(synonymObj != null) {
+            OperatedClause synonymClause = null;
+            for(Object obj : synonymObj) {
+                if(obj instanceof CharVector) {
+                    CharVector localToken = (CharVector)obj;
+                    localToken.setIgnoreCase();
+                    if(localToken.hasWhitespaces()) {
+                        List<CharVector> synonyms = CharVectorUtils.splitByWhitespace(localToken);
+                        OperatedClause extractedClause = null;
+                        /*
+                         * 유사어에 공백이 포함된 경우 여러단어로 나누어 AND 관계로 추가한다.
+                         * '서울대 => 서울 대학교'
+                         * 와 같은 관계가 해당된다.
+                         */
+
+                        for(CharVector synonym : synonyms) {
+                            SearchMethod localSearchMethod = searchIndexReader.createSearchMethod(new NormalSearchMethod());
+                            PostingReader localPostingReader = localSearchMethod.search(indexId, synonym, queryPosition, weight);
+                            OperatedClause localClause = new TermOperatedClause(indexId, synonym.toString(), localPostingReader, termSequence);
+
+                            if(extractedClause == null) {
+                                extractedClause = localClause;
+                            } else {
+                                //공백구분 유사어는 AND 관계가 맞다. 15.12.24 swsong
+                                extractedClause = new AndOperatedClause(extractedClause, localClause);
+                            }
+                        }
+                        if(synonymClause == null) {
+                            synonymClause = extractedClause;
+                        } else {
+                            synonymClause = new OrOperatedClause(synonymClause, extractedClause);
+                        }
+                    } else {
+                        SearchMethod localSearchMethod = searchIndexReader.createSearchMethod(new NormalSearchMethod());
+                        PostingReader localPostingReader = localSearchMethod.search(indexId, localToken, queryPosition, weight);
+                        OperatedClause localClause = new TermOperatedClause(indexId, localToken.toString(), localPostingReader, termSequence);
+
+                        if (synonymClause == null) {
+                            synonymClause = localClause;
+                        } else {
+                            synonymClause = new OrOperatedClause(synonymClause, localClause);
+                        }
+                    }
+                } else if(obj instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<CharVector>synonyms = (List<CharVector>)obj;
+                    OperatedClause extractedClause = null;
+                    //유사어가 여러단어로 분석될경우
+                    for(CharVector localToken : synonyms) {
+                        localToken.setIgnoreCase();
+                        SearchMethod localSearchMethod = searchIndexReader.createSearchMethod(new NormalSearchMethod());
+                        PostingReader localPostingReader = localSearchMethod.search(indexId, localToken, queryPosition, weight);
+                        OperatedClause localClause = new TermOperatedClause(indexId, localToken.toString(), localPostingReader, termSequence);
+
+                        if(extractedClause == null) {
+                            extractedClause = localClause;
+                        } else {
+                            //공백구분 유사어는 AND 관계가 맞다. 15.12.24 swsong
+                            extractedClause = new AndOperatedClause(extractedClause, localClause);
+                        }
+                    }
+                    if(synonymClause == null) {
+                        synonymClause = extractedClause;
+                    } else {
+                        synonymClause = new OrOperatedClause(synonymClause, extractedClause);
+                    }
+                }
+            }
+            if(synonymClause != null) {
+                int position = clause.getPosition();
+                clause = new OrOperatedClause(clause, synonymClause);
+                clause.setPosition(position);
+            }
+        }
+
+        return clause;
+    }
+    @Override
+    public OperatedClause[] children() {
+        return new OperatedClause[] { operatedClause };
+    }
 }

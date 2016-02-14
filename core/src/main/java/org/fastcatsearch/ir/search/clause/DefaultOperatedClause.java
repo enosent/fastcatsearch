@@ -1,6 +1,8 @@
 package org.fastcatsearch.ir.search.clause;
 
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Writer;
 
 import org.fastcatsearch.ir.query.RankInfo;
 import org.fastcatsearch.ir.query.RowExplanation;
@@ -47,16 +49,16 @@ public class DefaultOperatedClause extends OperatedClause {
 	}
 
 	@Override
-	public void printTrace(PrintStream os, int depth) {
-		operatedClause.printTrace(os, depth);
-	}
-
-	@Override
 	public OperatedClause[] children() {
 		return new OperatedClause[] { this.operatedClause };
 	}
-	
-	public DefaultOperatedClause clone(OperatedClause clause) {
+
+    @Override
+    public void printTrace(Writer writer, int indent, int depth) throws IOException {
+
+    }
+
+    public DefaultOperatedClause clone(OperatedClause clause) {
 		return new DefaultOperatedClause(clause, this.description);
 	}
 }

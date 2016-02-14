@@ -17,6 +17,7 @@
 package org.fastcatsearch.ir.search.clause;
 
 import java.io.PrintStream;
+import java.io.Writer;
 
 import org.fastcatsearch.ir.query.RankInfo;
 import org.fastcatsearch.ir.search.ClauseExplanation;
@@ -90,19 +91,19 @@ public class WeightedOperatedClause extends OperatedClause {
 			weightClause.close();
 		}		
 	}
-	
-	@Override
+
+    @Override
+    public void printTrace(Writer writer, int indent, int depth) {
+
+    }
+
+    @Override
 	protected void initClause(boolean explain) {
 		mainClause.init(explanation != null ? explanation.createSubExplanation() : null);
 		weightClause.init(explanation != null ? explanation.createSubExplanation() : null);
 		hasNext2 = weightClause.next(docInfo2);
 	}
-	@Override
-	public void printTrace(PrintStream os, int depth) {
-		// TODO Auto-generated method stub
-		
-	}
-	
+
 //	@Override
 //	protected void initExplanation() {
 //		if(mainClause != null) {

@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringWriter;
 
 /**
  * Single Thread로 동작한다.
@@ -160,10 +161,10 @@ public class SegmentSearcher {
 		}
 		
 		if (logger.isTraceEnabled() && operatedClause != null) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			PrintStream traceStream = new PrintStream(baos);
-			operatedClause.printTrace(traceStream, 0);
-			logger.trace("SegmentSearcher[seg#{}] stack >> \n{}", segmentReader.segmentInfo().getId(), baos.toString());
+            StringWriter writer = new StringWriter();
+            writer.append("\n");
+            operatedClause.printTrace(writer, 4, 0);
+            logger.trace("SegmentSearcher[seg#{}] stack >> \n{}", segmentReader.segmentInfo().getId(), writer.toString());
 		}
 		
 		
