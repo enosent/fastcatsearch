@@ -1,24 +1,18 @@
 package org.fastcatsearch.ir.search.clause;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.AnalyzerOption;
-import org.apache.lucene.analysis.tokenattributes.AdditionalTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.CharsRefTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.StopwordAttribute;
 import org.apache.lucene.analysis.tokenattributes.SynonymAttribute;
-import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
 import org.apache.lucene.util.CharsRef;
 import org.fastcatsearch.ir.io.CharVector;
 import org.fastcatsearch.ir.query.HighlightInfo;
@@ -40,6 +34,8 @@ public class PhraseClause extends OperatedClause {
     private SearchIndexReader searchIndexReader;
     private OperatedClause operatedClause;
     private int weight;
+
+    private int tokenSize;
 
     public PhraseClause(SearchIndexReader searchIndexReader, Term term, HighlightInfo highlightInfo) {
         super(searchIndexReader.indexId());
@@ -105,7 +101,6 @@ public class PhraseClause extends OperatedClause {
         }
 
         CharVector token = null;
-        int termSequence = 0;
 
         int queryPosition = 0;
 
@@ -139,17 +134,17 @@ public class PhraseClause extends OperatedClause {
             SearchMethod searchMethod = searchIndexReader.createSearchMethod(new NormalSearchMethod());
             PostingReader postingReader = searchMethod.search(indexId, token, queryPosition, weight);
 
-            OperatedClause clause = new TermOperatedClause(indexId, token.toString(), postingReader, termSequence);
+            OperatedClause clause = new TermOperatedClause(indexId, token.toString(), postingReader, tokenSize);
             // 유사어 처리
             if(synonymAttribute != null) {
-                clause = applySynonym(clause, searchIndexReader, synonymAttribute, indexId, queryPosition, termSequence);
+                clause = applySynonym(clause, searchIndexReader, synonymAttribute, indexId, queryPosition, tokenSize);
             }
             if (operatedClause == null) {
                 operatedClause = clause;
             } else {
-                operatedClause = new AndOperatedClause(operatedClause, clause, proximity);
+                operatedClause = new AndOperatedClause(operatedClause, clause, proximity, true);
             }
-
+            tokenSize++;
         }
 
         StringWriter writer = new StringWriter();
@@ -157,16 +152,44 @@ public class PhraseClause extends OperatedClause {
         if(logger.isDebugEnabled()) {
             logger.debug("{}", writer.toString());
         }
+
         return operatedClause;
     }
 
 
+    int count = 0;
+    RankInfo localRankInfo = new RankInfo();
     @Override
     protected boolean nextDoc(RankInfo rankInfo) {
         if (operatedClause == null) {
             return false;
         }
-        return operatedClause.next(rankInfo);
+
+        localRankInfo.clearOccurrence();
+        if(operatedClause.next(localRankInfo)) {
+            //TODO 여기서 단어출현 위치에 따른 점수계산 로직수행.
+
+
+
+            List<TermOccurrences> termOccurrencesList = localRankInfo.getTermOccurrencesList();
+
+            TermOccurrenceScorer.calculateScore(termOccurrencesList, tokenSize);
+
+            logger.debug("=[{}] {} >> Occur[{}]========", count++, termString, termOccurrencesList.size());
+            for(int i =0; i < termOccurrencesList.size(); i++) {
+                TermOccurrences termOccurrences = termOccurrencesList.get(i);
+
+                logger.debug(" > {}", termOccurrences);
+
+            }
+
+            rankInfo.init(localRankInfo);
+            return true;
+        } else {
+            return false;
+        }
+
+//        return operatedClause.next(rankInfo);
     }
 
     @Override

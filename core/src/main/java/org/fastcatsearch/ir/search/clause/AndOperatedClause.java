@@ -19,7 +19,6 @@ package org.fastcatsearch.ir.search.clause;
 import org.fastcatsearch.ir.query.RankInfo;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.Writer;
 
 public class AndOperatedClause extends OperatedClause {
@@ -31,6 +30,8 @@ public class AndOperatedClause extends OperatedClause {
 	private RankInfo docInfo2;
     private int proximity;
 
+    private boolean needsPositions;
+
 	public AndOperatedClause(OperatedClause clause1, OperatedClause clause2) {
 		super("AND");
 		this.clause1 = clause1;
@@ -41,9 +42,18 @@ public class AndOperatedClause extends OperatedClause {
         this(clause1, clause2);
         this.proximity = proximity;
     }
+    public AndOperatedClause(OperatedClause clause1, OperatedClause clause2, int proximity, boolean needsPositions) {
+        this(clause1, clause2);
+        this.proximity = proximity;
+        this.needsPositions = needsPositions;
+    }
 
 	protected boolean nextDoc(RankInfo rankInfo) {
         while(true) {
+            if(needsPositions) {
+                docInfo1.clearOccurrence();
+                docInfo2.clearOccurrence();
+            }
             hasNext1 = clause1.next(docInfo1);
             hasNext2 = clause2.next(docInfo2);
 
@@ -52,56 +62,31 @@ public class AndOperatedClause extends OperatedClause {
                 int doc2 = docInfo2.docNo();
                 while (hasNext1 && hasNext2 && (doc1 != doc2)) {
                     while (hasNext1 && (doc1 < doc2)) {
+                        if(needsPositions) {
+                            docInfo1.clearOccurrence();
+                        }
                         hasNext1 = clause1.next(docInfo1);
                         doc1 = docInfo1.docNo();
                     }
                     while (hasNext2 && (doc1 > doc2)) {
+                        if(needsPositions) {
+                            docInfo2.clearOccurrence();
+                        }
                         hasNext2 = clause2.next(docInfo2);
                         doc2 = docInfo2.docNo();
                     }
                 }
 
                 if (hasNext1 && hasNext2 && (doc1 == doc2)) {
-                    if (proximity != 0) {
-                        int[] pos1 = docInfo1.positions();
-                        int[] pos2 = docInfo2.positions();
-                        if(pos1 != null && pos2 != null) {
-                            boolean isProximity = false;
-                            OUTER:
-                            for (int p1 : pos1) {
-                                for (int p2 : pos2) {
-//                                    logger.debug("{}>>{}:{}", doc1, p1, p2);
-                                    if(proximity > 0) {
-                                        //순서존재.
-                                        int diff = p2 - p1;
-                                        if (diff >= 0 && diff <= proximity) {
-                                            //인접확인.
-                                            isProximity = true;
-                                            break OUTER;
-                                        }
-                                    } else {
-                                        //순서없음.
-                                        int diff = p2 - p1;
-                                        if (diff >= proximity && diff <= -proximity) {
-                                            //인접확인.
-                                            isProximity = true;
-                                            break OUTER;
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (!isProximity) {
-                                //재시도.
-                                continue;
-                            }
-                        }
-                    }
 
                     rankInfo.explain(docInfo1);
                     rankInfo.explain(docInfo2);
+                    if (needsPositions) {
+                        rankInfo.addTermOccurrencesList(docInfo1.getTermOccurrencesList());
+                        rankInfo.addTermOccurrencesList(docInfo2.getTermOccurrencesList());
+                    }
                     //positions는 doc2(나중 텀)의 것 을 넣어준다.
-                    rankInfo.init(doc1, docInfo1.score() + docInfo2.score(), docInfo1.hit() + docInfo2.hit(), docInfo2.positions());
+                    rankInfo.init(doc1, docInfo1.score() + docInfo2.score(), docInfo1.hit() + docInfo2.hit());
                     return true;
                 }
 

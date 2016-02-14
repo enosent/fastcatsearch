@@ -17,7 +17,6 @@
 package org.fastcatsearch.ir.search.clause;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.Writer;
 
 import org.fastcatsearch.ir.query.RankInfo;
@@ -32,11 +31,17 @@ public class TermOperatedClause extends OperatedClause {
 
 	private String termString;
 	private int termSequence;
-	
+    private String synonymOf;
+
+    private TermOccurrences termOccurrence;
+
 	public TermOperatedClause(String indexId, String termString, PostingReader postingReader) throws IOException {
-		this(indexId, termString, postingReader, 0);
+		this(indexId, termString, postingReader, 0, null);
 	}
-	public TermOperatedClause(String indexId, String termString, PostingReader postingReader, int termSequence) throws IOException {
+    public TermOperatedClause(String indexId, String termString, PostingReader postingReader, int termSequence) throws IOException {
+        this(indexId, termString, postingReader, termSequence, null);
+    }
+	public TermOperatedClause(String indexId, String termString, PostingReader postingReader, int termSequence, String synonymOf) throws IOException {
 		super(indexId);
 		this.termString = termString;
 
@@ -46,10 +51,12 @@ public class TermOperatedClause extends OperatedClause {
 			this.documentCount = postingReader.documentCount();
 			//termString = postingReader.term().toString();
 			this.termSequence = termSequence;
+            this.synonymOf = synonymOf;
             logger.debug(">>>>>>>>>> {} [{}]", termString, postingReader.termPosition());
 		} else {
             logger.debug(">>>>>>>>>> {} XXX", termString);
         }
+        termOccurrence = new TermOccurrences(termString, synonymOf, termSequence);
 	}
 
 	protected boolean nextDoc(RankInfo rankInfo) {
@@ -70,8 +77,11 @@ public class TermOperatedClause extends OperatedClause {
 			}
 //            logger.debug("TermOP >> {} doc[{}] score[{}] hit[{}] pos[{}]", termString, postingDoc.docNo(), score, termString.length(), postingDoc.positions());
 //			rankInfo.init(postingDoc.docNo(), score, postingDoc.tf(), postingDoc.positions());
-            rankInfo.init(postingDoc.docNo(), score, termString.length() * 3, postingDoc.positions());
+            rankInfo.init(postingDoc.docNo(), score, termString.length() * 3);
 			rankInfo.addMatchSequence(termSequence);
+            if(postingDoc.positions() != null) {
+                rankInfo.addTermOccurrences(termOccurrence.withPosition(postingDoc.positions()));
+            }
 			if(isExplain()){
 				rankInfo.explain(id, score, postingReader.term().toString());
 			}
@@ -117,7 +127,11 @@ public class TermOperatedClause extends OperatedClause {
 		return termString;
 	}
 
-	@Override
+    public String getSynonymOf() {
+        return synonymOf;
+    }
+
+    @Override
 	public void printTrace(Writer writer, int indent, int depth) throws IOException {
 		String indentSpace = "";
 		if(depth > 0){
@@ -137,6 +151,6 @@ public class TermOperatedClause extends OperatedClause {
 		if(postingReader!=null) {
 			size = postingReader.size();
 		}
-        writer.append(indentSpace).append("[TERM] ").append(termString).append(" [").append(String.valueOf(size)).append("] ").append(id);
+        writer.append(indentSpace).append("[TERM] ").append(termString).append(" [").append(String.valueOf(size)).append("] ").append(id).append("\n");
 	}
 }
