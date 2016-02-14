@@ -170,19 +170,12 @@ public class PhraseClause extends OperatedClause {
             //TODO 여기서 단어출현 위치에 따른 점수계산 로직수행.
 
 
-
+            int adjDistance = 5;
             List<TermOccurrences> termOccurrencesList = localRankInfo.getTermOccurrencesList();
 
-            TermOccurrenceScorer.calculateScore(termOccurrencesList, tokenSize);
-
+            int score = TermOccurrenceScorer.calculateScore(termOccurrencesList, tokenSize, adjDistance);
             logger.debug("=[{}] {} >> Occur[{}]========", count++, termString, termOccurrencesList.size());
-            for(int i =0; i < termOccurrencesList.size(); i++) {
-                TermOccurrences termOccurrences = termOccurrencesList.get(i);
-
-                logger.debug(" > {}", termOccurrences);
-
-            }
-
+            localRankInfo.score(localRankInfo.score() + score);
             rankInfo.init(localRankInfo);
             return true;
         } else {
