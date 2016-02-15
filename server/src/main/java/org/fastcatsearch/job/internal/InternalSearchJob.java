@@ -68,23 +68,27 @@ public class InternalSearchJob extends Job implements Streamable {
 				Query boostQuery = q.getBoostQuery();
 				PkScoreList pkScoreList = null;
 				if(boostQuery != null) {
-					String boostKeyword = boostQuery.getMeta().getUserData("KEYWORD");
-					pkScoreList = new PkScoreList(boostKeyword);
-					String boostCollectionId= boostQuery.getMeta().collectionId();
-					CollectionHandler boostCollectionHandler = irService.collectionHandler(boostCollectionId);
-					CollectionSearcher boostCollectionSearcher = boostCollectionHandler.searcher();
-					InternalSearchResult r = boostCollectionSearcher.searchInternal(boostQuery, forMerging);
-					for(HitElement e : r.getHitElementList()) {
-						if(e == null) {
-							continue;
-						}
-						//FIXME 첫번째 필드가 id이다.
-						logger.debug("e.docNo() > {}", e.docNo());
-						logger.debug("field > {}", boostCollectionSearcher.requestDocument(e.docNo()).get(1));
-						String id = boostCollectionSearcher.requestDocument(e.docNo()).get(1).toString();
-						int score = e.score();
-						pkScoreList.add(new PkScore(id, score));
-					}
+                    try {
+                        String boostKeyword = boostQuery.getMeta().getUserData("KEYWORD");
+                        pkScoreList = new PkScoreList(boostKeyword);
+                        String boostCollectionId = boostQuery.getMeta().collectionId();
+                        CollectionHandler boostCollectionHandler = irService.collectionHandler(boostCollectionId);
+                        CollectionSearcher boostCollectionSearcher = boostCollectionHandler.searcher();
+                        InternalSearchResult r = boostCollectionSearcher.searchInternal(boostQuery, forMerging);
+                        for (HitElement e : r.getHitElementList()) {
+                            if (e == null) {
+                                continue;
+                            }
+                            //FIXME 첫번째 필드가 id이다.
+                            logger.debug("e.docNo() > {}", e.docNo());
+                            logger.debug("field > {}", boostCollectionSearcher.requestDocument(e.docNo()).get(1));
+                            String id = boostCollectionSearcher.requestDocument(e.docNo()).get(1).toString();
+                            int score = e.score();
+                            pkScoreList.add(new PkScore(id, score));
+                        }
+                    } catch(Throwable t) {
+                        logger.error("error while boosting query > " + boostQuery, t);
+                    }
 				}
 				result = collectionHandler.searcher().searchInternal(q, forMerging, pkScoreList);
 			}
