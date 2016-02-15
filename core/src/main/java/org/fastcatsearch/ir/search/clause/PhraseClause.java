@@ -173,7 +173,7 @@ public class PhraseClause extends OperatedClause {
             int adjDistance = 5;
             List<TermOccurrences> termOccurrencesList = localRankInfo.getTermOccurrencesList();
 
-            int score = TermOccurrenceScorer.calculateScore(termOccurrencesList, tokenSize, adjDistance);
+            int score = TermOccurrenceScorer.calculateScore(termOccurrencesList, tokenSize, adjDistance, weight);
             logger.debug("=[{}] {} >> Occur[{}]========", count++, termString, termOccurrencesList.size());
             localRankInfo.score(localRankInfo.score() + score);
             rankInfo.init(localRankInfo);

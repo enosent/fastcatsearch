@@ -2,6 +2,7 @@ package org.fastcatsearch.ir.search.clause;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
@@ -69,7 +70,10 @@ public class BooleanClause extends OperatedClause {
 			analyzerOption.setForQuery();
 
 			operatedClause = search(indexId, fullTerm, term.getProximity(), term.type(), indexSetting, analyzer, analyzerOption, requestTypeAttribute);
-			
+
+//            StringWriter writer = new StringWriter();
+//            printTrace(writer, 4, 0);
+//            logger.debug(">>> {}", writer.toString());
 		} catch (IOException e) {
 			logger.error("", e);
 		} finally {
@@ -176,6 +180,7 @@ public class BooleanClause extends OperatedClause {
 			//
 			//isSynonym 일 경우 다시한번 유사어확장을 하지 않는다.
 			if(synonymAttribute != null) {
+                logger.debug(">>>>>>>>>>>>> [Synonym] {}", synonymAttribute.getSynonyms());
 				clause = applySynonym(clause, searchIndexReader, synonymAttribute, indexId, queryPosition, termSequence, type);
 			}
 			if (operatedClause == null) {
@@ -284,7 +289,7 @@ public class BooleanClause extends OperatedClause {
 		if(logger.isTraceEnabled()) {
 			logger.trace("clause:{}", dumpClause(operatedClause));
 		}
-		
+
 //		if(logger.isTraceEnabled() && operatedClause!=null) {
 //			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 //			PrintStream traceStream = new PrintStream(baos);
@@ -395,7 +400,7 @@ public class BooleanClause extends OperatedClause {
 				}
 			}
 		}
-        writer.append(indentSpace).append("[OR]");
+        writer.append(indentSpace).append("[BOOLEAN]\n");
 		operatedClause.printTrace(writer, indent, depth + 1);
 		
 	}

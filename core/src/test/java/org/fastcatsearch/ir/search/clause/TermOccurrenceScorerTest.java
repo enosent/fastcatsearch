@@ -24,7 +24,7 @@ public class TermOccurrenceScorerTest {
         termOccurrencesList.add(new TermOccurrences("B", null, query++).withPosition(new int[]{3,7,15,40,80}));
         termOccurrencesList.add(new TermOccurrences("C", null, query++).withPosition(new int[]{2,8,17,38,77}));
         int tokenSize = termOccurrencesList.size();
-        int score = TermOccurrenceScorer.calculateScore(termOccurrencesList, tokenSize, adjDistance);
+        int score = TermOccurrenceScorer.calculateScore(termOccurrencesList, tokenSize, adjDistance, 100);
 
         logger.info("list = {}", termOccurrencesList);
         logger.info("score = {}", score);

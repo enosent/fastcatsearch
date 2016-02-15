@@ -12,7 +12,7 @@ public class TermOccurrenceScorer {
 
     private static Logger logger = LoggerFactory.getLogger(TermOccurrenceScorer.class);
 
-    public static int calculateScore(List<TermOccurrences> termOccurrencesList, int totalTermSize, int adjDistance){
+    public static int calculateScore(List<TermOccurrences> termOccurrencesList, int totalTermSize, int adjDistance, int weight){
 
         if(termOccurrencesList == null || termOccurrencesList.size() == 0 || totalTermSize <= 0) {
             return 0;
@@ -98,7 +98,7 @@ public class TermOccurrenceScorer {
         }
 
         logger.debug("scoreMatrix {}", scoreMatrix);
-        return totalScore;
+        return totalScore * weight;
     }
 
     static class Term {

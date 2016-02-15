@@ -55,7 +55,24 @@ public class DefaultOperatedClause extends OperatedClause {
 
     @Override
     public void printTrace(Writer writer, int indent, int depth) throws IOException {
+        String indentSpace = "";
+        if(depth > 0){
+            for (int i = 0; i < (depth - 1) * indent; i++) {
+                indentSpace += " ";
+            }
 
+            for (int i = (depth - 1) * indent, p = 0; i < depth * indent; i++, p++) {
+                if(p == 0){
+                    indentSpace += "|";
+                }else{
+                    indentSpace += "-";
+                }
+            }
+        }
+        writer.append(indentSpace).append("[").append(description).append("]\n");
+        if(operatedClause != null) {
+            operatedClause.printTrace(writer, indent, depth + 1);
+        }
     }
 
     public DefaultOperatedClause clone(OperatedClause clause) {
