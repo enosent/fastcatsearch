@@ -26,6 +26,9 @@ import java.util.TreeMap;
 @ActionMapping("/service/demo/search")
 public class DemoSearchAction extends ServiceAction {
 
+    private static final String SECTION_SEPARATOR = "(?<!\\\\)&";
+    private static final String VALUE_SEPARATOR = "(?<!\\\\)=";
+
 	@Override
 	public void doAction(ActionRequest request, ActionResponse response) throws Exception {
 
@@ -145,28 +148,28 @@ public class DemoSearchAction extends ServiceAction {
 		if(tagetString == null){
 			return null;
 		}
-		
-		return tagetString.replaceAll("#keyword", keyword);
+
+        return tagetString.replace("#keyword", keyword);
 	}
-	
+
 	private QueryMap parse(String queryString) {
 		
 		Map<String, String> parameterMap = new HashMap<String, String>();
 		String collectionId = null;
-		for (String pair : queryString.split("&")) {
-			int eq = pair.indexOf("=");
-			if (eq < 0) {
+		for (String pair : queryString.split(SECTION_SEPARATOR)) {
+            String[] kv = pair.split(VALUE_SEPARATOR);
+			if (kv.length < 2) {
 				// key with no value
 				// parameterMap.put(pair.toUpperCase(), "");
 				parameterMap.put(pair, "");
 			} else {
 				// key=value
-				String key = pair.substring(0, eq);
-				String value = pair.substring(eq + 1);
+				String key = kv[0];
+				String value = kv[1];
 				try {
 					String decodedValue = URLDecoder.decode(value, "utf-8");
 					value = decodedValue;
-//					logger.debug("DECODE {} > {}", value, decodedValue);
+					logger.debug("DECODE {} > {}", value, decodedValue);
 				} catch (Exception e) {
 					// 디코드 에러시 디코드하지 않음. '100%보증'과 같은 문자가 들어올수 있음.
 				}
