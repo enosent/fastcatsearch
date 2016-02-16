@@ -52,9 +52,9 @@ public class TermOperatedClause extends OperatedClause {
 			//termString = postingReader.term().toString();
 			this.termSequence = termSequence;
             this.synonymOf = synonymOf;
-            logger.debug(">>>>>>>>>> {} [{}]", termString, postingReader.termPosition());
+//            logger.debug(">>>>>>>>>> {} [{}]", termString, postingReader.termPosition());
 		} else {
-            logger.debug(">>>>>>>>>> {} XXX", termString);
+//            logger.debug(">>>>>>>>>> {} XXX", termString);
         }
         termOccurrence = new TermOccurrences(termString, synonymOf, termSequence);
 	}
