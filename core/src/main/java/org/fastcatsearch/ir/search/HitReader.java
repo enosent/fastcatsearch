@@ -122,13 +122,15 @@ public class HitReader {
 			explanation = new Explanation();
 			clauseExplanation = explanation.createClauseExplanation();
 		}
-		
-		if (logger.isTraceEnabled() && operatedClause != null) {
-            StringWriter writer = new StringWriter();
-            writer.append("\n");
-            operatedClause.printTrace(writer, 4, 0);
-			logger.trace("SegmentSearcher[seg#{}] stack >> \n{}", segmentReader.segmentInfo().getId(), writer.toString());
-		}
+
+        if(logger.isTraceEnabled()) {
+            if (operatedClause != null) {
+                StringWriter writer = new StringWriter();
+                writer.append("\n");
+                operatedClause.printTrace(writer, 4, 0);
+                logger.trace("SegmentSearcher[seg#{}] stack >> \n{}", segmentReader.segmentInfo().getId(), writer.toString());
+            }
+        }
 		
 		operatedClause.init(clauseExplanation);
 		
