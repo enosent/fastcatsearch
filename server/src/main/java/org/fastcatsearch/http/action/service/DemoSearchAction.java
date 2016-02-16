@@ -141,23 +141,9 @@ public class DemoSearchAction extends ServiceAction {
 		responseWriter.endObject();
 	}
 	
-	private String replaceKeyword(String tagetString, String keyword){
+	private String replaceKeyword(String tagetString, String keyword) {
 		if(tagetString == null){
 			return null;
-		}
-
-		/*
-		* 2016-01-20 전제현
-		* 검색 시 $, \ 등을 사용할 경우 오류사항 수정
-		* */
-		if(keyword != null) {
-			if (keyword.contains("$")) {
-				keyword = keyword.replace('$', ' ');
-			}
-
-			if (keyword.contains("\\")) {
-				keyword = keyword.replace('\\', ' ');
-			}
 		}
 		
 		return tagetString.replaceAll("#keyword", keyword);
