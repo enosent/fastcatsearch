@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 /**
  * Created by 전제현 on 2016-02-22.
+ * 텍스트 파일에서 URL 정보를 읽어와 해당 URL의 내용을 파싱하여 색인한다. (웹페이지 색인)
  */
 @SourceReader(name="WEBPAGE_PARSING")
 public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>> {
@@ -173,7 +174,7 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
 
     /*
     * 설정에 입력된 파일을 불러와 파싱을 할 URL 정보를 가져온다.
-    * 입력할 정보는 URL,제목,인코딩 설정 이다.
+    * 입력할 정보는 URL,제목,인코딩 설정,링크주소 이다.
     * URL 이외에는 필수 입력 항목이 아니며, 제목의 경우 입력하지 않으면 title 태그에서 제목을 가져오고, 인코딩 설정은 입력하지 않을 시 기본적으로 UTF-8이다.
     * */
     private String readURLInfo() throws IRException {
