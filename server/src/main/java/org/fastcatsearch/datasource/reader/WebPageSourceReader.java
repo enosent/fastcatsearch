@@ -36,7 +36,6 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
     protected static Logger logger = LoggerFactory.getLogger(WebPageSourceReader.class);
 
     private DirBufferedReader br;
-    private String filepath;
     private Map<String, Object> dataMap;
     private Pattern p;
     private int lineNum;
@@ -83,17 +82,17 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
     @Override
     public boolean hasNext() throws IRException {
 
-        String oneDoc = readOneDoc();
+        String urlInfo = readURLInfo();
         dataMap = new HashMap<String, Object>();
-        if(oneDoc == null)
+        if(urlInfo == null)
             return false;
 
-        String[] tmps = oneDoc.split("\t");
+        String[] tmps = urlInfo.split("\t");
 
         if (tmps.length >= 1) {
             String source = webPageGather.getLinkPageContent(tmps[0], tmps.length>2?tmps[2]:"utf-8", "get");
             //id
-            dataMap.put("ID", lineNum);
+            dataMap.put("id", lineNum);
 
             //title
             if (tmps.length == 1) {
@@ -108,7 +107,7 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
                         title = source;
                     }
                 }
-                dataMap.put("TITLE", title);
+                dataMap.put("title", title);
             } else {
 
                 if (tmps[1] == null) {
@@ -123,9 +122,9 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
                             title = source;
                         }
                     }
-                    dataMap.put("TITLE", title);
+                    dataMap.put("title", title);
                 } else {
-                    dataMap.put("TITLE", tmps[1]);
+                    dataMap.put("title", tmps[1]);
                 }
             }
 
@@ -139,10 +138,10 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
             if(extracted == null) {
                 extracted = HTMLTagRemover.clean(source);
             }
-            dataMap.put("CONTENT", extracted);
+            dataMap.put("content", extracted);
 
             //url
-            dataMap.put("URL", tmps[0]);
+            dataMap.put("url", tmps[0]);
         } else {
             logger.error("There is error in url list file at line "+lineNum);
             return false;
@@ -151,7 +150,12 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
         return true;
     }
 
-    private String readOneDoc() throws IRException {
+    /*
+    * 설정에 입력된 파일을 불러와 파싱을 할 URL 정보를 가져온다.
+    * 입력할 정보는 URL,제목,인코딩 설정 이다.
+    * URL 이외에는 필수 입력 항목이 아니며, 제목의 경우 입력하지 않으면 title 태그에서 제목을 가져오고, 인코딩 설정은 입력하지 않을 시 기본적으로 UTF-8이다.
+    * */
+    private String readURLInfo() throws IRException {
 
         String line = "";
 
@@ -203,9 +207,9 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
 
     @Override
     protected void initParameters() {
-        registerParameter(new SourceReaderParameter("filepath", "File Path", "Filepath for indexing."
+        registerParameter(new SourceReaderParameter("filepath", "URL List TextFile Path", "TextFile Path for Webpaage Parsing."
                 , SourceReaderParameter.TYPE_STRING_LONG, true, null));
-        registerParameter(new SourceReaderParameter("encoding", "Encoding", "File encoding"
+        registerParameter(new SourceReaderParameter("encoding", "Encoding", "TextFile encoding"
                 , SourceReaderParameter.TYPE_STRING, true, null));
     }
 }
