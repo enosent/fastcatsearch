@@ -89,18 +89,30 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
 
         String[] tmps = urlInfo.split("\t");
 
-        if (tmps.length >= 1) {
-            String source = webPageGather.getLinkPageContent(tmps[0], tmps.length>2?tmps[2]:"utf-8", "get");
-            //id
+        if (tmps.length >= 1 && tmps.length < 5) {
+            String source;
+            if (tmps.length <= 2) {
+                source = webPageGather.getLinkPageContent(tmps[0], "utf-8", "get");
+            } else if (tmps.length >= 3) {
+                if (tmps[2] == null || tmps[2].equals("")) {
+                    source = webPageGather.getLinkPageContent(tmps[0], "utf-8", "get");
+                } else {
+                    source = webPageGather.getLinkPageContent(tmps[0], tmps.length > 2 ? tmps[2] : "utf-8", "get");
+                }
+            } else {
+                logger.error("There is error in url list parameter at line {}", lineNum);
+                return false;
+            }
+            // ID값 입력, URL 정보 한 줄을 읽어올  때마다 1씩 증가한다. (필드 ID)
             dataMap.put("id", lineNum);
 
-            //title
+            // 타이틀, 텍스트 파일에 미리 입력해 둔 타이틀이 있다면 해당 값을 가져오고, 그게 아니라면 타이틀 태그에서 값을 가져온다. (필드 TITLE)
             if (tmps.length == 1) {
                 Matcher m = p.matcher(source);
                 String title = "";
                 if (m.find()) {
                     title = m.group(1);
-                }else{
+                } else {
                     if (source.length() > 10) {
                         title = source.substring(0,10);
                     }else{
@@ -110,12 +122,12 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
                 dataMap.put("title", title);
             } else {
 
-                if (tmps[1] == null) {
+                if (tmps[1] == null || tmps[1].equals("")) {
                     Matcher m = p.matcher(source);
                     String title = "";
                     if (m.find()) {
                         title = m.group(1);
-                    }else{
+                    } else {
                         if (source.length() > 10) {
                             title = source.substring(0,10);
                         }else{
@@ -128,7 +140,7 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
                 }
             }
 
-            //content
+            // 웹페이지 내용을 파싱 후 텍스트에 해당되는 내용만을 추출한다. 필드 CONTENT에 저장한다. 페이지 접근이 되지 않을 경우 파싱하지 않는다.
             String extracted = null;
             try {
                 extracted = extractor.extract(source);
@@ -140,10 +152,19 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
             }
             dataMap.put("content", extracted);
 
-            //url
-            dataMap.put("url", tmps[0]);
+            /*
+            * URL 값을 색인 시 저장한다. 해당 값은 텍스트 파일에 입력한 주소를 그대로 가져온다.
+            * 4번째 파라미터로 하이퍼링크 용의 주소를 별도로 입력했을 경우
+            * */
+            if (tmps.length == 4) {
+                dataMap.put("url", tmps[0]);
+                dataMap.put("link", tmps[3]);
+            } else {
+                dataMap.put("url", tmps[0]);
+                dataMap.put("link", tmps[0]);
+            }
         } else {
-            logger.error("There is error in url list file at line "+lineNum);
+            logger.error("There is error in url list file at line {}", lineNum);
             return false;
         }
 
@@ -159,7 +180,7 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
 
         String line = "";
 
-        try{
+        try {
 
             line = br.readLine();
 
@@ -172,8 +193,6 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
                 line += splited[count] + "\t";
             }
             lineNum++;
-
-
 
         } catch (UnsupportedEncodingException e) {
             logger.error(e.getMessage(), e);
