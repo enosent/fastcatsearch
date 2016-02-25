@@ -177,7 +177,7 @@ public class LargePrimaryKeyIndexWriter implements BytesToIntWriter, BytesToIntR
 			}
 		}
 
-		return 0;
+		return -1;
 	}
 
 	@Override
