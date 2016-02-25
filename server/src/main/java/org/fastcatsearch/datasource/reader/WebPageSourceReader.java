@@ -1,15 +1,9 @@
 package org.fastcatsearch.datasource.reader;
 
-import org.apache.derby.iapi.sql.ResultSet;
 import org.fastcatsearch.datasource.SourceModifier;
 import org.fastcatsearch.datasource.reader.annotation.SourceReader;
-import org.fastcatsearch.env.Environment;
 import org.fastcatsearch.ir.common.IRException;
 import org.fastcatsearch.ir.config.SingleSourceConfig;
-import org.fastcatsearch.ir.document.Document;
-import org.fastcatsearch.ir.index.PrimaryKeys;
-import org.fastcatsearch.ir.io.BufferedFileOutput;
-import org.fastcatsearch.ir.io.DirBufferedReader;
 import org.fastcatsearch.util.HTMLTagRemover;
 import org.fastcatsearch.util.ReadabilityExtractor;
 import org.fastcatsearch.util.WebPageGather;
@@ -17,12 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.charset.Charset;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,12 +20,12 @@ import java.util.regex.Pattern;
  * Created by 전제현 on 2016-02-22.
  * 텍스트 파일에서 URL 정보를 읽어와 해당 URL의 내용을 파싱하여 색인한다. (웹페이지 색인)
  */
-@SourceReader(name="WEBPAGE_PARSING")
+@SourceReader(name="WEBPAGE")
 public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>> {
 
     protected static Logger logger = LoggerFactory.getLogger(WebPageSourceReader.class);
 
-    private DirBufferedReader br;
+    private String[] urlList;
     private Map<String, Object> dataMap;
     private Pattern p;
     private int lineNum;
@@ -56,28 +45,12 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
     public void init() throws IRException {
 
         dataMap = null;
-        p = Pattern.compile("<title>(.*)</title>",Pattern.CASE_INSENSITIVE);
+        p = Pattern.compile("<title>(?s)(.*)(?s)</title>",Pattern.CASE_INSENSITIVE);
         lineNum = 0;
         webPageGather = new WebPageGather();
 
-        String fileEncoding = getConfigString("encoding");
-        if (fileEncoding == null) {
-            fileEncoding = Charset.defaultCharset().toString();
-        }
-        try {
-            File file = filePath.makePath(getConfigString("filepath")).file();
-            br = new DirBufferedReader(file, fileEncoding);
-            logger.info("Collect file = {}, {}", file.getAbsolutePath(), fileEncoding);
-        } catch (UnsupportedEncodingException e) {
-            logger.error(e.getMessage(), e);
-            throw new IRException(e);
-        } catch (FileNotFoundException e) {
-            logger.error(e.getMessage(), e);
-            throw new IRException(e);
-        } catch (IOException e) {
-            logger.error(e.getMessage(), e);
-            throw new IRException(e);
-        }
+        String urlListText = getConfigString("urlList").toString();
+        urlList = urlListText.split("\n");
     }
 
     @Override
@@ -89,6 +62,9 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
             return false;
 
         String[] tmps = urlInfo.split("\t");
+        for (int count = 0; count < tmps.length; count++) {
+            tmps[count] = tmps[count].replaceAll("\r", "");
+        }
 
         if (tmps.length >= 1 && tmps.length < 5) {
             String source;
@@ -114,8 +90,8 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
                 if (m.find()) {
                     title = m.group(1);
                 } else {
-                    if (source.length() > 10) {
-                        title = source.substring(0,10);
+                    if (source.length() > 100) {
+                        title = source.substring(0,100);
                     }else{
                         title = source;
                     }
@@ -181,30 +157,20 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
 
         String line = "";
 
-        try {
-
-            line = br.readLine();
-
-            if(line == null)
-                return null;
-
-            String[] splited = line.split(",");
-            line = "";
-            for (int count = 0; count < splited.length; count++) {
-                line += splited[count] + "\t";
-            }
-            lineNum++;
-
-        } catch (UnsupportedEncodingException e) {
-            logger.error(e.getMessage(), e);
-            throw new IRException(e);
-        } catch (FileNotFoundException e) {
-            logger.error(e.getMessage(), e);
-            throw new IRException(e);
-        } catch (IOException e) {
-            logger.error(e.getMessage(), e);
-            throw new IRException(e);
+        if (lineNum >= urlList.length) {
+            return null;
         }
+
+        if (urlList[lineNum] == null) {
+            return null;
+        }
+
+        String[] splited = urlList[lineNum].split(",");
+        line = "";
+        for (int cnt = 0; cnt < splited.length; cnt++) {
+            line += splited[cnt] + "\t";
+        }
+        lineNum++;
 
         return line;
     }
@@ -215,21 +181,8 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
     }
 
     @Override
-    public void close() throws IRException {
-        try {
-            if (br != null) {
-                br.close();
-            }
-        } catch (IOException e) {
-            throw new IRException(e);
-        }
-    }
-
-    @Override
     protected void initParameters() {
-        registerParameter(new SourceReaderParameter("filepath", "URL List TextFile Path", "TextFile Path for Webpaage Parsing."
-                , SourceReaderParameter.TYPE_STRING_LONG, true, null));
-        registerParameter(new SourceReaderParameter("encoding", "Encoding", "TextFile encoding"
-                , SourceReaderParameter.TYPE_STRING, true, null));
+        registerParameter(new SourceReaderParameter("urlList", "URL List", "URL List for Webpage Parsing. (URL,TITLE,Encoding,Link URL)"
+                , SourceReaderParameter.TYPE_TEXT, true, null));
     }
 }
