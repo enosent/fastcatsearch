@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  * Created by 전제현 on 2016-02-22.
  * 텍스트 파일에서 URL 정보를 읽어와 해당 URL의 내용을 파싱하여 색인한다. (웹페이지 색인)
  */
-@SourceReader(name="WEBPAGE_PARSING")
+@SourceReader(name="WEBPAGE")
 public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>> {
 
     protected static Logger logger = LoggerFactory.getLogger(WebPageSourceReader.class);
@@ -45,7 +45,7 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
     public void init() throws IRException {
 
         dataMap = null;
-        p = Pattern.compile("<title>(.*)</title>",Pattern.CASE_INSENSITIVE);
+        p = Pattern.compile("<title>(?s)(.*)(?s)</title>",Pattern.CASE_INSENSITIVE);
         lineNum = 0;
         webPageGather = new WebPageGather();
 
@@ -90,8 +90,8 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
                 if (m.find()) {
                     title = m.group(1);
                 } else {
-                    if (source.length() > 10) {
-                        title = source.substring(0,10);
+                    if (source.length() > 100) {
+                        title = source.substring(0,100);
                     }else{
                         title = source;
                     }
