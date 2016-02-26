@@ -90,11 +90,7 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
                 if (m.find()) {
                     title = m.group(1);
                 } else {
-                    if (source.length() > 100) {
-                        title = source.substring(0,100);
-                    }else{
-                        title = source;
-                    }
+                    title = "";
                 }
                 dataMap.put("title", title);
             } else {
@@ -105,11 +101,7 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
                     if (m.find()) {
                         title = m.group(1);
                     } else {
-                        if (source.length() > 10) {
-                            title = source.substring(0,10);
-                        }else{
-                            title = source;
-                        }
+                        title = "";
                     }
                     dataMap.put("title", title);
                 } else {
