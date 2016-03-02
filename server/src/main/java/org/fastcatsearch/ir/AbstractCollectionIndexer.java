@@ -27,6 +27,7 @@ import org.fastcatsearch.job.indexing.IndexingStopException;
 import org.fastcatsearch.job.state.IndexingTaskState;
 import org.fastcatsearch.util.CollectionContextUtil;
 import org.fastcatsearch.util.FilePaths;
+import org.jdom.JDOMException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,14 +61,14 @@ public abstract class AbstractCollectionIndexer implements CollectionIndexerable
 		this.selectedIndexList = selectedIndexList;
 	}
 	
-	protected abstract DataSourceReader createDataSourceReader(File filePath, SchemaSetting schemaSetting) throws IRException;
+	protected abstract DataSourceReader createDataSourceReader(File filePath, SchemaSetting schemaSetting) throws IRException, JDOMException, IOException;
 	protected abstract void prepare() throws IRException;
 	protected abstract boolean done(RevisionInfo revisionInfo, IndexStatus indexStatus) throws IRException, IndexingStopException;
 	protected IndexWritable createIndexWriter(Schema schema, File segmentDir, RevisionInfo revisionInfo, IndexConfig indexConfig) throws IRException {
 		return new SegmentWriter(schema, segmentDir, revisionInfo, indexConfig, analyzerPoolManager, selectedIndexList);
 	}
 	
-	public void init(Schema schema) throws IRException {
+	public void init(Schema schema) throws IRException, JDOMException, IOException {
 
 		prepare();
 		

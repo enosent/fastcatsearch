@@ -1,6 +1,7 @@
 package org.fastcatsearch.datasource.reader;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.fastcatsearch.ir.common.IRException;
 import org.fastcatsearch.ir.config.SingleSourceConfig;
 import org.fastcatsearch.ir.index.DeleteIdSet;
 import org.fastcatsearch.ir.settings.SchemaSetting;
+import org.jdom.JDOMException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +35,7 @@ public abstract class SingleSourceReader<SourceType> {
 
 	protected int maxRows;
 	
-	public abstract void init() throws IRException; // 초기화. 파일을 여는등의 작업.
+	public abstract void init() throws IRException, JDOMException, IOException; // 초기화. 파일을 여는등의 작업.
 
 	public abstract boolean hasNext() throws IRException;
 

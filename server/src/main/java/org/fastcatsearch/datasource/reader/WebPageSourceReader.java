@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 
 /**
  * Created by 전제현 on 2016-02-22.
- * 텍스트 파일에서 URL 정보를 읽어와 해당 URL의 내용을 파싱하여 색인한다. (웹페이지 색인)
+ * 설정에서 URL List를 읽어와 해당 URL의 내용을 파싱하여 색인한다. (웹페이지 색인)
  */
 @SourceReader(name="WEBPAGE")
 public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>> {
@@ -66,7 +66,7 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
             tmps[count] = tmps[count].replaceAll("\r", "");
         }
 
-        if (tmps.length >= 1 && tmps.length < 5) {
+        if (tmps.length >= 1 && tmps.length < 6) {
             String source;
             if (tmps.length <= 2) {
                 source = webPageGather.getLinkPageContent(tmps[0], "utf-8", "get");
@@ -82,6 +82,7 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
             }
             // ID값 입력, URL 정보 한 줄을 읽어올  때마다 1씩 증가한다. (필드 ID)
             dataMap.put("id", lineNum);
+            dataMap.put("source", source);
 
             // 타이틀, 텍스트 파일에 미리 입력해 둔 타이틀이 있다면 해당 값을 가져오고, 그게 아니라면 타이틀 태그에서 값을 가져온다. (필드 TITLE)
             if (tmps.length == 1) {
@@ -131,6 +132,14 @@ public class WebPageSourceReader extends SingleSourceReader<Map<String, Object>>
             } else {
                 dataMap.put("url", tmps[0]);
                 dataMap.put("link", tmps[0]);
+            }
+
+            /*
+            * 2016-03-02
+            * 별도의 다섯 번째 파라미터를 받는 경우 추가
+            * */
+            if (tmps.length == 5) {
+                dataMap.put("etc", tmps[4]);
             }
         } else {
             logger.error("There is error in url list file at line {}", lineNum);

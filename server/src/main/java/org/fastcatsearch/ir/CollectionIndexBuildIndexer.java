@@ -1,6 +1,7 @@
 package org.fastcatsearch.ir;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.fastcatsearch.datasource.reader.DataSourceReader;
 import org.fastcatsearch.datasource.reader.StoredDocumentSourceReader;
@@ -18,12 +19,13 @@ import org.fastcatsearch.ir.index.SelectedIndexList;
 import org.fastcatsearch.ir.settings.Schema;
 import org.fastcatsearch.ir.settings.SchemaSetting;
 import org.fastcatsearch.job.indexing.IndexingStopException;
+import org.jdom.JDOMException;
 
 public class CollectionIndexBuildIndexer extends AbstractCollectionIndexer {
 
 	private File indexDataDir;
 	
-	public CollectionIndexBuildIndexer(CollectionContext collectionContext, AnalyzerPoolManager analyzerPoolManager, SelectedIndexList selectedIndexList) throws IRException {
+	public CollectionIndexBuildIndexer(CollectionContext collectionContext, AnalyzerPoolManager analyzerPoolManager, SelectedIndexList selectedIndexList) throws IRException, JDOMException, IOException {
 		super(collectionContext, analyzerPoolManager, selectedIndexList);
 		init(collectionContext.schema());
 	}
@@ -35,7 +37,7 @@ public class CollectionIndexBuildIndexer extends AbstractCollectionIndexer {
 	}
 	
 	@Override
-	protected DataSourceReader createDataSourceReader(File /*ignore*/filePath, SchemaSetting schemaSetting) throws IRException {
+	protected DataSourceReader createDataSourceReader(File /*ignore*/filePath, SchemaSetting schemaSetting) throws IRException, JDOMException, IOException {
 		StoredDocumentSourceReader reader = new StoredDocumentSourceReader(indexDataDir, schemaSetting);
 		reader.init();
 		return reader;

@@ -18,20 +18,21 @@ import org.fastcatsearch.ir.config.DataInfo.SegmentInfo;
 import org.fastcatsearch.ir.config.DataSourceConfig;
 import org.fastcatsearch.ir.settings.SchemaSetting;
 import org.fastcatsearch.job.indexing.IndexingStopException;
+import org.jdom.JDOMException;
 
 /**
  * 컬렉션의 전체색인을 수행하는 indexer.
  * */
 public class CollectionFullIndexer extends AbstractCollectionIndexer {
 	
-	public CollectionFullIndexer(CollectionContext collectionContext, AnalyzerPoolManager analyzerPoolManager) throws IRException {
+	public CollectionFullIndexer(CollectionContext collectionContext, AnalyzerPoolManager analyzerPoolManager) throws IRException, JDOMException, IOException {
 		super(collectionContext, analyzerPoolManager);
 
 		init(collectionContext.schema());
 	}
 
 	@Override
-	protected DataSourceReader createDataSourceReader(File filePath, SchemaSetting schemaSetting) throws IRException{
+	protected DataSourceReader createDataSourceReader(File filePath, SchemaSetting schemaSetting) throws IRException, JDOMException, IOException {
 		DataSourceConfig dataSourceConfig = collectionContext.dataSourceConfig();
 		
 		return DefaultDataSourceReaderFactory.createFullIndexingSourceReader(super.collectionContext.collectionId(),filePath, schemaSetting, dataSourceConfig);
