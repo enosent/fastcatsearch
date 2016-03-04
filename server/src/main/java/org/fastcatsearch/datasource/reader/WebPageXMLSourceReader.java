@@ -46,7 +46,7 @@ public class WebPageXMLSourceReader extends SingleSourceReader<Map<String, Objec
     }
 
     @Override
-    public void init() throws IRException, JDOMException, IOException {
+    public void init() throws IRException {
 
         dataMap = null;
         p = Pattern.compile("<title>(?s)(.*)(?s)</title>", Pattern.CASE_INSENSITIVE);
@@ -61,7 +61,15 @@ public class WebPageXMLSourceReader extends SingleSourceReader<Map<String, Objec
             logger.error("There is no Source File.");
         }
         SAXBuilder builder = new SAXBuilder();
-        doc = builder.build(f);
+
+        try {
+            doc = builder.build(f);
+        } catch (IOException e) {
+            logger.error(e.toString());
+        } catch (JDOMException e) {
+            logger.error(e.toString());
+        }
+
         root = doc.getRootElement();
 
         List list = root.getChild("document").getChildren("entity");

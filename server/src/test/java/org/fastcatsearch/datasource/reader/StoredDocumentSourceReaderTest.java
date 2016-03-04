@@ -12,13 +12,12 @@ import org.fastcatsearch.ir.common.IRException;
 import org.fastcatsearch.ir.document.Document;
 import org.fastcatsearch.ir.settings.SchemaSetting;
 import org.fastcatsearch.util.JAXBConfigs;
-import org.jdom.JDOMException;
 import org.junit.Test;
 
 public class StoredDocumentSourceReaderTest {
 
 	@Test
-	public void test() throws JAXBException, IRException, InterruptedException, JDOMException, IOException {
+	public void test() throws JAXBException, IRException, IOException, InterruptedException {
 		final String indexPath = "/Users/swsong/TEST_HOME/danawa1022/node1/collections/VM/data/index1";
 		String schemaFilePath = "/Users/swsong/TEST_HOME/danawa1022/node1/collections/VM/schema.xml";
 		
@@ -53,10 +52,6 @@ public class StoredDocumentSourceReaderTest {
 						reader.close();
 					
 					} catch (IRException e) {
-						e.printStackTrace();
-					} catch (JDOMException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
 						e.printStackTrace();
 					}
 					latch.countDown();

@@ -22,7 +22,6 @@ import org.fastcatsearch.job.indexing.IndexingStopException;
 import org.fastcatsearch.job.state.IndexingTaskState;
 import org.fastcatsearch.util.CollectionContextUtil;
 import org.fastcatsearch.util.FilePaths;
-import org.jdom.JDOMException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,10 +61,10 @@ public class MultiThreadCollectionFullIndexer implements CollectionIndexerable {
 	private List<SegmentIndexWriteConsumer> consumerList;
 	
 	
-	public MultiThreadCollectionFullIndexer(CollectionContext collectionContext, AnalyzerPoolManager analyzerPoolManager) throws IRException, JDOMException, IOException {
+	public MultiThreadCollectionFullIndexer(CollectionContext collectionContext, AnalyzerPoolManager analyzerPoolManager) throws IRException {
 		this(collectionContext, analyzerPoolManager, null);
 	}
-	public MultiThreadCollectionFullIndexer(CollectionContext collectionContext, AnalyzerPoolManager analyzerPoolManager, SelectedIndexList selectedIndexList) throws IRException, JDOMException, IOException {
+	public MultiThreadCollectionFullIndexer(CollectionContext collectionContext, AnalyzerPoolManager analyzerPoolManager, SelectedIndexList selectedIndexList) throws IRException {
 		this.collectionContext = collectionContext;
 		this.analyzerPoolManager = analyzerPoolManager;
 		this.selectedIndexList = selectedIndexList;
@@ -73,7 +72,7 @@ public class MultiThreadCollectionFullIndexer implements CollectionIndexerable {
 		init(collectionContext.schema());
 	}
 	
-	protected DataSourceReader createDataSourceReader(File filePath, SchemaSetting schemaSetting) throws IRException, JDOMException, IOException{
+	protected DataSourceReader createDataSourceReader(File filePath, SchemaSetting schemaSetting) throws IRException{
 		DataSourceConfig dataSourceConfig = collectionContext.dataSourceConfig();
 		return DefaultDataSourceReaderFactory.createFullIndexingSourceReader(collectionContext.collectionId(), filePath, schemaSetting, dataSourceConfig);
 	}
@@ -117,11 +116,11 @@ public class MultiThreadCollectionFullIndexer implements CollectionIndexerable {
 		
 	}
 	
-	protected IndexWritable createIndexWriter(Schema schema, File segmentDir, RevisionInfo revisionInfo, IndexConfig indexConfig) throws IRException, JDOMException, IOException {
+	protected IndexWritable createIndexWriter(Schema schema, File segmentDir, RevisionInfo revisionInfo, IndexConfig indexConfig) throws IRException {
 		return new SegmentWriter(schema, segmentDir, revisionInfo, indexConfig, analyzerPoolManager, selectedIndexList);
 	}
 	
-	public void init(Schema schema) throws IRException, JDOMException, IOException {
+	public void init(Schema schema) throws IRException {
 
 		prepare();
 		

@@ -15,17 +15,16 @@ import org.fastcatsearch.ir.config.DataInfo.SegmentInfo;
 import org.fastcatsearch.ir.index.SelectedIndexList;
 import org.fastcatsearch.ir.settings.SchemaSetting;
 import org.fastcatsearch.job.indexing.IndexingStopException;
-import org.jdom.JDOMException;
 
 public class CollectionFullDocumentStorer extends AbstractCollectionIndexer {
 
-	public CollectionFullDocumentStorer(CollectionContext collectionContext) throws IRException, JDOMException, IOException {
+	public CollectionFullDocumentStorer(CollectionContext collectionContext) throws IRException {
 		super(collectionContext, null, new SelectedIndexList());
 		init(collectionContext.schema());
 	}
 
 	@Override
-	protected DataSourceReader createDataSourceReader(File filePath, SchemaSetting schemaSetting) throws IRException, JDOMException, IOException{
+	protected DataSourceReader createDataSourceReader(File filePath, SchemaSetting schemaSetting) throws IRException{
 		DataSourceConfig dataSourceConfig = collectionContext.dataSourceConfig();
 		return DefaultDataSourceReaderFactory.createFullIndexingSourceReader(collectionContext.collectionId(), filePath, schemaSetting, dataSourceConfig);
 	}

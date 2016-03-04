@@ -26,7 +26,6 @@ import org.fastcatsearch.job.indexing.IndexingStopException;
 import org.fastcatsearch.util.CollectionContextUtil;
 import org.fastcatsearch.util.CoreFileUtils;
 import org.fastcatsearch.util.FilePaths;
-import org.jdom.JDOMException;
 
 /**
  * 컬렉션의 증분색인을 수행하는 indexer.
@@ -35,7 +34,7 @@ public class CollectionAddIndexer extends AbstractCollectionIndexer {
 	
 	private CollectionHandler collectionHandler;
 	
-	public CollectionAddIndexer(CollectionHandler collectionHandler) throws IRException, JDOMException, IOException{
+	public CollectionAddIndexer(CollectionHandler collectionHandler) throws IRException {
 		super(collectionHandler.collectionContext(), collectionHandler.analyzerPoolManager());
 		this.collectionHandler = collectionHandler;
 		
@@ -44,7 +43,7 @@ public class CollectionAddIndexer extends AbstractCollectionIndexer {
 	}
 	
 	@Override
-	protected DataSourceReader createDataSourceReader(File filePath, SchemaSetting schemaSetting) throws IRException, JDOMException, IOException{
+	protected DataSourceReader createDataSourceReader(File filePath, SchemaSetting schemaSetting) throws IRException{
 		DataSourceConfig dataSourceConfig = collectionContext.dataSourceConfig();
 		String lastIndexTime = collectionContext.getLastIndexTime();
 		return DefaultDataSourceReaderFactory.createAddIndexingSourceReader(collectionContext.collectionId(), filePath, schemaSetting, dataSourceConfig, lastIndexTime);
