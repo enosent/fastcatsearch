@@ -1,6 +1,5 @@
 package org.fastcatsearch.datasource.reader;
 
-import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import org.fastcatsearch.datasource.SourceModifier;
 import org.fastcatsearch.datasource.reader.annotation.SourceReader;
@@ -12,6 +11,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+import org.json.JSONException;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,16 +60,9 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
     public void init() throws IRException {
 
         String configType = getConfigString("configFileType").toString();
-        String configParameterString = getConfigString("configFileParameter").toString();
-        String[] configParameter;
         File configFile = new File(getConfigString("configFilePath").toString());
         SAXBuilder builder = new SAXBuilder();
 
-        if (configParameterString.equals("") || configParameterString == null) {
-            configParameter = new String[0];
-        } else {
-            configParameter = configParameterString.split(",");
-        }
         dataMap = null;
         p = Pattern.compile("<title>(?s)(.*)(?s)</title>", Pattern.CASE_INSENSITIVE);
         wdate = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -89,12 +82,12 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
                 root = doc.getRootElement();
 
                 List list = root.getChild("document").getChildren("entity");
+                String[] configParameter = root.getChild("document").getChild("attributes").getAttributeValue("value").split("\\,");
 
                 for (int i = 0; i < list.size(); i++) {
                     Element el = (Element) list.get(i);
                     Map sdata = new HashMap();
-                    sdata.put("url", el.getAttributeValue("url"));
-                    sdata.put("charset", el.getAttributeValue("charset"));
+
                     for (int paramCnt = 0; paramCnt < configParameter.length; paramCnt++) {
                         sdata.put(configParameter[paramCnt], el.getAttributeValue(configParameter[paramCnt]));
                     }
@@ -109,39 +102,40 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
         } else if (configType.equalsIgnoreCase(TYPE_YML)) {
 
             YamlReader reader = null;
+
             try {
                 reader = new YamlReader(new FileReader(configFile));
-            } catch (FileNotFoundException e) {
-                logger.error(e.toString());
-            }
-            while (true) {
-                Map sdata = null;
-                try {
-                    sdata = (Map) reader.read();
+                while (true) {
+                    Map sdata = (Map) reader.read();
                     if (sdata == null) break;
                     sourceList.add(sdata);
-                } catch (YamlException e) {
-                    logger.error(e.toString());
                 }
+                reader.close();
+            } catch (IOException e) {
+                logger.error(e.toString());
+            } finally {
+                try { reader.close(); } catch (IOException e) { logger.error(e.toString()); }
             }
 
         } else if (configType.equalsIgnoreCase(TYPE_JSON)) {
 
-            try {
+            FileReader jsonFile = null;
 
+            try {
+                jsonFile = new FileReader(configFile);
                 JSONParser parser = new JSONParser();
-                Object obj = parser.parse(new FileReader(configFile));
+                Object obj = parser.parse(jsonFile);
                 JSONObject jsonObject = (JSONObject) obj;
 
                 JSONArray list = (JSONArray) jsonObject.get("list");
+                JSONArray attributes = (JSONArray) jsonObject.get("attributes");
                 for (int cnt = 0; cnt < list.size(); cnt++) {
                     JSONObject listObj = (JSONObject) list.get(cnt);
                     if (listObj != null) {
                         Map sdata = new HashMap();
-                        sdata.put("url", listObj.get("url"));
-                        sdata.put("charset", listObj.get("charset"));
-                        for (int paramCnt = 0; paramCnt < configParameter.length; paramCnt++) {
-                            sdata.put(configParameter[paramCnt], listObj.get(configParameter[paramCnt]));
+                        for (int cnt2 = 0; cnt2 < attributes.size(); cnt2++) {
+                            JSONObject attributeObj = (JSONObject) attributes.get(cnt2);
+                            sdata.put(attributeObj.get("value"), listObj.get(attributeObj.get("value")));
                         }
                         sourceList.add(sdata);
                     }
@@ -153,6 +147,8 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
                 logger.error(e.toString());
             } catch (ParseException e) {
                 logger.error(e.toString());
+            } finally {
+                try { jsonFile.close(); } catch (IOException e) { logger.error(e.toString()); }
             }
 
         } else {
@@ -218,8 +214,6 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
     protected void initParameters() {
         registerParameter(new SourceReaderParameter("configFileType", "Full indexing Config File Type", "Config File Type for Full indexing Webpage Parsing. (XML, YML, JSON)"
                 , SourceReaderParameter.TYPE_STRING, true, null));
-        registerParameter(new SourceReaderParameter("configFileParameter", "Full indexing Config File Parameter", "Config File's Parameter for Full indexing Webpage Parsing."
-                , SourceReaderParameter.TYPE_STRING_LONG, true, null));
         registerParameter(new SourceReaderParameter("configFilePath", "Full indexing Config File Path", "Config File for Full indexing Webpage Parsing."
                 , SourceReaderParameter.TYPE_STRING_LONG, true, null));
     }
