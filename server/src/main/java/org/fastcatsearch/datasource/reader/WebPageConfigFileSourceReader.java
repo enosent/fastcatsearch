@@ -7,11 +7,11 @@ import org.fastcatsearch.ir.common.IRException;
 import org.fastcatsearch.ir.config.SingleSourceConfig;
 import org.fastcatsearch.util.ReadabilityExtractor;
 import org.fastcatsearch.util.WebPageGather;
+import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
-import org.json.JSONException;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,12 +84,14 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
                 List list = root.getChild("document").getChildren("entity");
                 String[] configParameter = root.getChild("document").getChild("attributes").getAttributeValue("value").split("\\,");
 
-                for (int i = 0; i < list.size(); i++) {
-                    Element el = (Element) list.get(i);
-                    Map sdata = new HashMap();
+                for (int cnt = 0; cnt < list.size(); cnt++) {
+                    Element el = (Element) list.get(cnt);
 
-                    for (int paramCnt = 0; paramCnt < configParameter.length; paramCnt++) {
-                        sdata.put(configParameter[paramCnt], el.getAttributeValue(configParameter[paramCnt]));
+                    List attributes = ((Element) list.get(cnt)).getAttributes();
+                    Map sdata = new HashMap();
+                    for (int attributeCnt = 0; attributeCnt < configParameter.length; attributeCnt++) {
+                        String attribute = ((Attribute) attributes.get(attributeCnt)).getName();
+                        sdata.put(attribute, el.getAttributeValue(attribute));
                     }
                     sourceList.add(sdata);
                 }
@@ -128,15 +130,10 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
                 JSONObject jsonObject = (JSONObject) obj;
 
                 JSONArray list = (JSONArray) jsonObject.get("list");
-                JSONArray attributes = (JSONArray) jsonObject.get("attributes");
                 for (int cnt = 0; cnt < list.size(); cnt++) {
                     JSONObject listObj = (JSONObject) list.get(cnt);
                     if (listObj != null) {
-                        Map sdata = new HashMap();
-                        for (int cnt2 = 0; cnt2 < attributes.size(); cnt2++) {
-                            JSONObject attributeObj = (JSONObject) attributes.get(cnt2);
-                            sdata.put(attributeObj.get("value"), listObj.get(attributeObj.get("value")));
-                        }
+                        Map sdata = (Map) listObj;
                         sourceList.add(sdata);
                     }
                 }
