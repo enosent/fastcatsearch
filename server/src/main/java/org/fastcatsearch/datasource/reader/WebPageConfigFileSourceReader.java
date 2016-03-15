@@ -82,23 +82,22 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
                 root = doc.getRootElement();
 
                 List list = root.getChild("document").getChildren("entity");
-                String[] configParameter = root.getChild("document").getChild("attributes").getAttributeValue("value").split("\\,");
 
                 for (int cnt = 0; cnt < list.size(); cnt++) {
                     Element el = (Element) list.get(cnt);
 
                     List attributes = ((Element) list.get(cnt)).getAttributes();
                     Map sdata = new HashMap();
-                    for (int attributeCnt = 0; attributeCnt < configParameter.length; attributeCnt++) {
+                    for (int attributeCnt = 0; attributeCnt < attributes.size(); attributeCnt++) {
                         String attribute = ((Attribute) attributes.get(attributeCnt)).getName();
                         sdata.put(attribute, el.getAttributeValue(attribute));
                     }
                     sourceList.add(sdata);
                 }
             } catch (IOException e) {
-                logger.error(e.toString());
+                logger.error("WebPageConfigFileSourceReader Error ", e);
             } catch (JDOMException e) {
-                logger.error(e.toString());
+                logger.error("WebPageConfigFileSourceReader Error ", e);
             }
 
         } else if (configType.equalsIgnoreCase(TYPE_YML)) {
@@ -112,11 +111,13 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
                     if (sdata == null) break;
                     sourceList.add(sdata);
                 }
-                reader.close();
             } catch (IOException e) {
-                logger.error(e.toString());
+                logger.error("WebPageConfigFileSourceReader Error ", e);
             } finally {
-                try { reader.close(); } catch (IOException e) { logger.error(e.toString()); }
+                try {
+                    reader.close();
+                } catch (IOException Ignore) {
+                }
             }
 
         } else if (configType.equalsIgnoreCase(TYPE_JSON)) {
@@ -139,13 +140,16 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
                 }
 
             } catch (FileNotFoundException e) {
-                logger.error(e.toString());
+                logger.error("WebPageConfigFileSourceReader Error ", e);
             } catch (IOException e) {
-                logger.error(e.toString());
+                logger.error("WebPageConfigFileSourceReader Error ", e);
             } catch (ParseException e) {
-                logger.error(e.toString());
+                logger.error("WebPageConfigFileSourceReader Error ", e);
             } finally {
-                try { jsonFile.close(); } catch (IOException e) { logger.error(e.toString()); }
+                try {
+                    jsonFile.close();
+                } catch (IOException Ignore) {
+                }
             }
 
         } else {
