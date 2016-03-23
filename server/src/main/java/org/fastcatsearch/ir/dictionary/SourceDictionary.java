@@ -54,6 +54,10 @@ public abstract class SourceDictionary implements ReloadableDictionary, Writable
 			logger.error("", e);
 		}
 	}
+
+	public void clear() {
+
+	}
 	
 	public void addEntry(String keyword, Object[] values) {
 		addEntry(keyword, values, null);

@@ -89,16 +89,15 @@ public class GetDictionaryWordListAction extends AuthAction {
 			//if(columnSettingList != null){
 				for(Map<String, Object> vo : list){
 					resultWriter.object().key(ID_COLUMN).value(vo.get(ID_COLUMN));
-						for(int i = 0 ;i < columnSettingList.size(); i++){
-							ColumnSetting columnSetting = columnSettingList.get(i);
-							String name = columnSetting.getName().toUpperCase();
-							resultWriter.key(name).value(vo.get(name));
-						}
+					for(int i = 0 ;i < columnSettingList.size(); i++){
+						ColumnSetting columnSetting = columnSettingList.get(i);
+						String name = columnSetting.getName().toUpperCase();
+						resultWriter.key(name).value(vo.get(name));
+					}
 						
 					resultWriter.endObject();
 				}
 			//}
-			
 		}
 		
 		resultWriter.endArray();

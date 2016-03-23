@@ -66,6 +66,12 @@ public class MapDictionary extends SourceDictionary {
 	}
 
 	@Override
+	public void clear() {
+		super.clear();
+		map.clear();
+	}
+
+	@Override
 	public void addEntry(String keyword, Object[] values, List<ColumnSetting> columnList) {
         if (keyword == null) {
             return;

@@ -39,4 +39,10 @@ public class InvertMapDictionary extends MapDictionary {
             map.put(new CharVector((String) values[i]), value);
         }
     }
+
+    @Override
+    public void clear() {
+        super.clear();
+        map.clear();
+    }
 }

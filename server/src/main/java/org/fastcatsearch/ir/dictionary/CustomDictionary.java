@@ -218,6 +218,13 @@ public class CustomDictionary extends SourceDictionary {
 			throw new IllegalArgumentException("Reload dictionary argument error. argument = " + object);
 		}
 	}
+
+	@Override
+	public void clear() {
+		super.clear();
+		wordSet.clear();
+		map.clear();
+	}
 	
 	public void setWordSet(Set<CharVector> wordSet) {
 		this.wordSet = wordSet;

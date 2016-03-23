@@ -130,5 +130,9 @@ public class SetDictionary extends SourceDictionary {
 		}
 	}
 
-
+	@Override
+	public void clear() {
+		super.clear();
+		set.clear();
+	}
 }

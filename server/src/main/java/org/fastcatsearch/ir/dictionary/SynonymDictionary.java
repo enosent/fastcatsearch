@@ -262,4 +262,10 @@ public class SynonymDictionary extends MapDictionary {
 			throw new IllegalArgumentException("Reload dictionary argument error. argument = " + object);
 		}
 	}
+
+	@Override
+	public void clear() {
+		super.clear();
+		wordSet.clear();
+	}
 }
