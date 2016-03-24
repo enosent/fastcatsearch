@@ -17,22 +17,21 @@ package org.apache.lucene.search.highlight;
  * limitations under the License.
  */
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.AdditionalTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+import org.apache.lucene.util.PriorityQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.AdditionalTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
-import org.apache.lucene.util.Attribute;
-import org.apache.lucene.util.PriorityQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Class used to markup highlighted terms found in the best sections of a text, using configurable {@link Fragmenter},
@@ -341,6 +340,8 @@ public class Highlighter {
 				if(deltaList.containsKey(startOffset[0])) {
 					logger.trace("offset:{} / {}", startOffset[0], deltaList.get(startOffset[0]));
 					newText.setLength(startOffset[0] + deltaList.get(startOffset[0]));
+				} else {
+					newText.setLength(startOffset[0]);
 				}
 			}
 			newText.append(markedUpText);
