@@ -17,7 +17,7 @@ public class DAOSourceDictionaryCompiler {
 	
 	protected static final Logger logger = LoggerFactory.getLogger(DAOSourceDictionaryCompiler.class);
 	
-	private static final int BULK_SIZE = 5000;
+	private static final int BULK_SIZE = 80000;
 
 	/*
 	 * 컴파일된 엔트리 갯수를 반환한다.
