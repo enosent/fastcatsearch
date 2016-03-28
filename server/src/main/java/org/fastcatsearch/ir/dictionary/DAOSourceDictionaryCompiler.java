@@ -49,43 +49,36 @@ public class DAOSourceDictionaryCompiler {
 //		if(!isKeyNullable && keyColumnName == null){
 //			throw new Exception("Key column is not specified.");
 //		}
+		
+		while (start <= count) {
+			int end = start + BULK_SIZE;
 
-		OutputStream out = null;
-
-		try {
-
-			out = new FileOutputStream(targetFile);
-
-			while (start <= count) {
-				int end = start + BULK_SIZE;
-
-				List<Map<String, Object>> result = dictionaryDAO.getEntryList(start, end, null, null);
-				for (int i = 0; i < result.size(); i++) {
-					Map<String, Object> vo = result.get(i);
-					Object[] values = new Object[valueColumnNames.size()];
-					String key = null;
-					if(keyColumnName != null){
-						key = vo.get(keyColumnName).toString().trim();
-					}
-					for (int j = 0; j < valueColumnNames.size(); j++) {
-						String columnName = valueColumnNames.get(j);
-
-						values[j] = vo.get(columnName);
-					}
-					dictionaryType.addEntry(key, values, columnSettingList);
+			List<Map<String, Object>> result = dictionaryDAO.getEntryList(start, end, null, null);
+			for (int i = 0; i < result.size(); i++) {
+				Map<String, Object> vo = result.get(i);
+				Object[] values = new Object[valueColumnNames.size()];
+				String key = null;
+				if(keyColumnName != null){
+					key = vo.get(keyColumnName).toString().trim();
 				}
-
-
-				if (result.size() < BULK_SIZE) {
-					// 다 읽어온 것임.
-					break;
+				for (int j = 0; j < valueColumnNames.size(); j++) {
+					String columnName = valueColumnNames.get(j);
+					
+					values[j] = vo.get(columnName);
 				}
-				start += BULK_SIZE;
-
-				dictionaryType.writeTo(out);
-				dictionaryType.clear();
+				dictionaryType.addEntry(key, values, columnSettingList);
 			}
 
+			if (result.size() < BULK_SIZE) {
+				// 다 읽어온 것임.
+				break;
+			}
+			start += BULK_SIZE;
+		}
+		OutputStream out = null;
+		try {
+			out = new FileOutputStream(targetFile);
+			dictionaryType.writeTo(out);
 		} finally {
 			if (out != null) {
 				try {
