@@ -14,6 +14,7 @@ import org.fastcatsearch.ir.common.IRException;
 import org.fastcatsearch.ir.config.SingleSourceConfig;
 
 @SourceReader(name="DIRECTORY_PATH")
+@Deprecated
 public class DirectoryPathReader extends SingleSourceReader<Map<String,Object>> implements FileFilter, Runnable {
 	
 	public DirectoryPathReader() {

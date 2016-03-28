@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @SourceReader(name="SIMPLE_FILE")
+@Deprecated
 public class SimpleFileReader extends SingleSourceReader<Map<String,Object>> implements FileFilter, Runnable {
 	
 	public SimpleFileReader() {
