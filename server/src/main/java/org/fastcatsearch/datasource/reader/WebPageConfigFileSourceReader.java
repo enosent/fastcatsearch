@@ -15,14 +15,9 @@ import org.jdom.input.SAXBuilder;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -122,21 +117,16 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
 
         } else if (configType.equalsIgnoreCase(TYPE_JSON)) {
 
-            FileReader jsonFile = null;
+            BufferedReader jsonReader = null;
+            String line = null;
 
             try {
-                jsonFile = new FileReader(configFile);
-                JSONParser parser = new JSONParser();
-                Object obj = parser.parse(jsonFile);
-                JSONObject jsonObject = (JSONObject) obj;
+                jsonReader = new BufferedReader((new InputStreamReader(new FileInputStream(configFile))));
 
-                JSONArray list = (JSONArray) jsonObject.get("list");
-                for (int cnt = 0; cnt < list.size(); cnt++) {
-                    JSONObject listObj = (JSONObject) list.get(cnt);
-                    if (listObj != null) {
-                        Map sdata = (Map) listObj;
-                        sourceList.add(sdata);
-                    }
+                while ((line = jsonReader.readLine()) != null) {
+                    JSONParser parser = new JSONParser();
+                    Map listObj = (Map) parser.parse(line);
+                    sourceList.add(listObj);
                 }
 
             } catch (FileNotFoundException e) {
@@ -147,7 +137,7 @@ public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String
                 logger.error("WebPageConfigFileSourceReader Error ", e);
             } finally {
                 try {
-                    jsonFile.close();
+                    jsonReader.close();
                 } catch (IOException Ignore) {
                 }
             }
