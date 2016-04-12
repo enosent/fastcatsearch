@@ -26,13 +26,15 @@ import org.fastcatsearch.ir.sort.SortFunction;
 public class Sort {
 	private String fieldIndexId;
 	boolean asc;
-	
+	boolean isSuffle;
 	public Sort(String fieldIndexId){
-		this(fieldIndexId, true);
+		this(fieldIndexId, true, false);
 	}
-	public Sort(String fieldIndexId, boolean asc){
+	public Sort(String fieldIndexId, boolean asc){ this(fieldIndexId, true, false); }
+	public Sort(String fieldIndexId, boolean asc, boolean shuffle) {
 		this.fieldIndexId = fieldIndexId.toUpperCase();
 		this.asc = asc;
+		this.isSuffle = shuffle;
 	}
 	
 	public String toString(){
@@ -48,16 +50,38 @@ public class Sort {
 	public SortFunction createSortFunction(FieldSetting fieldSetting) {
 		if(fieldSetting.isNumericField()){
 			//데이터가 int, long등의 숫자형일 경우 byte[] 의 비교방식이 달라진다.
-			if(asc){
-				return new NumericAscSortFunction();
-			}else{
-				return new NumericDescSortFunction();
+			if(isSuffle) {
+				/*
+				* 같은 가중치의 값을 가진 경우 검색결과 출력순서를 랜덤으로...
+				* */
+				if (asc) {
+					return new NumericAscSortFunction(true);
+				} else {
+					return new NumericDescSortFunction(true);
+				}
+			} else {
+				if(asc){
+					return new NumericAscSortFunction();
+				}else{
+					return new NumericDescSortFunction();
+				}
 			}
 		}else{
-			if(asc){
-				return new DataAscSortFunction();
-			}else{
-				return new DataDescSortFunction();
+			if(isSuffle) {
+				/*
+				* 같은 가중치의 값을 가진 경우 검색결과 출력순서를 랜덤으로...
+				* */
+				if (asc) {
+					return new DataAscSortFunction(true);
+				} else {
+					return new DataDescSortFunction(true);
+				}
+			} else {
+				if (asc) {
+					return new DataAscSortFunction();
+				} else {
+					return new DataDescSortFunction();
+				}
 			}
 		}
 	}

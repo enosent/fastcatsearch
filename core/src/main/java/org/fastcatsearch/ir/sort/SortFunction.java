@@ -18,9 +18,25 @@ package org.fastcatsearch.ir.sort;
 
 import org.apache.lucene.util.BytesRef;
 
+import java.util.Random;
+
 /**
  * 정렬 결과는 역순으로 사용된다.
  * */
 public abstract class SortFunction {
+	protected Random r;
+	boolean isShuffle;
+
+	public SortFunction() {
+		r = new Random();
+		this.isShuffle = false;
+	}
+
+	public SortFunction(boolean isShuffle) {
+		// shuffle 값을 지정하여 초기화할 경우
+		r = new Random();
+		this.isShuffle = isShuffle;
+	}
+
 	public abstract int compare(BytesRef one, BytesRef two);
 }

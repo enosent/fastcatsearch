@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 /**
  * Created by 전제현 on 2016-02-22.
  * 설정 파일에서 URL 정보를 읽어와 해당 URL의 내용을 파싱하여 색인한다.
+ * JSON 형식은 JsonList 방식으로 데이터를 읽어온다. (한 줄 당 JSONObject 하나)
  */
 @SourceReader(name="WEBPAGE_CONFIG")
 public class WebPageConfigFileSourceReader extends SingleSourceReader<Map<String, Object>> {

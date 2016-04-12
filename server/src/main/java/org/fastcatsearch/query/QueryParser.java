@@ -245,8 +245,24 @@ public class QueryParser {
 			for (int k = 0; k < list.length; k++) {
 				String[] str = list[k].split(COLON_SEPARATOR);
 				if (str.length > 1) {
-					boolean isAsc = str[1].equalsIgnoreCase("asc");
-					s.add(new Sort(str[0], isAsc));
+
+					boolean isAsc, isShuffle;
+
+					// asc일 시 isAsc true
+					if (str[1].equalsIgnoreCase("asc") || str[1].equalsIgnoreCase("asc_shuffle")) {
+						isAsc = true;
+					} else {
+						isAsc = false;
+					}
+
+					//_shuffle 로 endwith 면, isShuffle 을 true
+					if (str[1].endsWith("_shuffle") || str[1].endsWith("_SHUFFLE")) {
+						isShuffle = true;
+					} else {
+						isShuffle = false;
+					}
+
+					s.add(new Sort(str[0], isAsc, isShuffle));
 				} else {
 					s.add(new Sort(list[k]));
 				}
