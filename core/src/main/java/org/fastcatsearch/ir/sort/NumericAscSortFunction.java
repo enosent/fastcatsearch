@@ -42,4 +42,5 @@ public class NumericAscSortFunction extends SortFunction {
 			return ret;
 		}
 	}
+
 }
