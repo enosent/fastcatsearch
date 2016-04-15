@@ -94,7 +94,7 @@ public abstract class IndexingJob extends Job implements Streamable {
 			indexingFinishNotification = new IndexingSuccessNotification(collectionId, indexingType, indexingStep, resultStatus, indexingStartTime, endTime, streamableResult);
 		} else if (resultStatus == ResultStatus.FAIL) {
 			indexingFinishNotification = new IndexingFailNotification(collectionId, indexingType, indexingStep, resultStatus, indexingStartTime, endTime, streamableResult);
-		} else if (resultStatus == ResultStatus.CANCEL) {
+        } else if (resultStatus == ResultStatus.CANCEL || resultStatus == ResultStatus.STOP) {
 			indexingFinishNotification = new IndexingCancelNotification(collectionId, indexingType, indexingStep, resultStatus, indexingStartTime, endTime, streamableResult);
 		}
 		
@@ -103,7 +103,7 @@ public abstract class IndexingJob extends Job implements Streamable {
 				indexingTaskState.finishSuccess();
 			} else if (resultStatus == ResultStatus.FAIL) {
 				indexingTaskState.finishFail();
-			} else if (resultStatus == ResultStatus.CANCEL) {
+            } else if (resultStatus == ResultStatus.CANCEL || resultStatus == ResultStatus.STOP) {
 				indexingTaskState.finishCancel();
 			}
 		}
