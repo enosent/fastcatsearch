@@ -3,7 +3,7 @@
     <parent>
         <groupId>co.fastcat</groupId>
         <artifactId>fastcatsearch</artifactId>
-        <version>2.34.3</version>
+        <version>2.34.3-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>co.fastcat.fastcatsearch</groupId>
