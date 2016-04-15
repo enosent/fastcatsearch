@@ -25,7 +25,7 @@ import java.util.Random;
  * */
 public abstract class SortFunction {
 	protected Random r;
-	boolean isShuffle;
+	protected boolean isShuffle;
 
 	public SortFunction() {
 		r = new Random();
