@@ -166,16 +166,17 @@ public class LargePrimaryKeyIndexWriter implements BytesToIntWriter, BytesToIntR
 	public int get(byte[] data, int offset, int length) throws IOException {
 
 		int value = memoryKeyIndex.get(data, offset, length);
-		if (value == -1) {
-			if (flushCount > 0) {
-				for (int i = flushCount - 1; i >= 0; i--) {
-					value = readerList.get(i).get(data, offset, length);
-					if (value != -1) {
-						return value;
-					}
-				}
-			}
-		}
+        if (value != -1) {
+            return value;
+        }
+        if (flushCount > 0) {
+            for (int i = flushCount - 1; i >= 0; i--) {
+                value = readerList.get(i).get(data, offset, length);
+                if (value != -1) {
+                    return value;
+                }
+            }
+        }
 
 		return -1;
 	}
