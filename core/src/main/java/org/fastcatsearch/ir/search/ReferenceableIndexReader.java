@@ -62,8 +62,8 @@ public abstract class ReferenceableIndexReader implements ReferenceableReader {
 				dataRef.init(0);
 			}
 		}else{
-			int pos = dataSize * docNo;
-			dataInput.seek(pos);
+			long pos = ((long) dataSize) * docNo;
+            dataInput.seek(pos);
 			//이미 input의 position을 움직여 놓았으므로 더이상 아무것도 하지 않는다.
 			dataInput.readBytes(dataRef.bytesRef().bytes, 0, dataSize);
 //			logger.debug("fill group data to {} as {}", dataRef, IOUtil.readInt(dataRef.bytesRef().bytes, 0));
