@@ -100,7 +100,7 @@ public class HitReader {
 				if(fieldIndexesReader == null){
 					fieldIndexesReader = segmentReader.newFieldIndexesReader();
 				}
-				sortGenerator = new BundleSortGenerator(bundle, null, schema, fieldIndexesReader);
+                sortGenerator = Sorts.DEFAULT_SORTS.getSortGenerator(schema, fieldIndexesReader, bundle);
 			}
 		} else {
 			if(fieldIndexesReader == null){
