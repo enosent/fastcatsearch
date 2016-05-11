@@ -66,31 +66,66 @@ public class GroupEntryList {
 		}
 		entryList.add(groupEntry);
 	}
-	
-	public static Comparator<GroupEntry> KeyAscendingComparator = new Comparator<GroupEntry>(){
-		@Override
-		public int compare(GroupEntry o1, GroupEntry o2) {
-			return o1.key.compareTo(o2.key);
-		}
-	};
-	public static Comparator<GroupEntry> KeyDescendingComparator = new Comparator<GroupEntry>(){
-		@Override
-		public int compare(GroupEntry o1, GroupEntry o2) {
-			return o2.key.compareTo(o1.key);
-		}
-	};
-	public static Comparator<GroupEntry> ValueAscendingComparator = new Comparator<GroupEntry>(){
-		@Override
-		public int compare(GroupEntry o1, GroupEntry o2) {
-			return o1.groupingValue[0].compareTo(o2.groupingValue[0]);
-		}
-	};
-	public static Comparator<GroupEntry> ValueDescendingComparator = new Comparator<GroupEntry>(){
-		@Override
-		public int compare(GroupEntry o1, GroupEntry o2) {
-			return o2.groupingValue[0].compareTo(o1.groupingValue[0]);
-		}
-	};
+
+    /**
+     * 키값이 NULL일 경우, 항상 마지막에 출현하도록.
+     * */
+    public static Comparator<GroupEntry> KeyAscendingComparator = new Comparator<GroupEntry>(){
+        @Override
+        public int compare(GroupEntry o1, GroupEntry o2) {
+            if(o1.key == null || o2.key == null) {
+                return 0;
+            } else if(o1.key == null) {
+                return 1;
+            } else if(o2.key == null) {
+                return -1;
+            }
+            return o1.key.compareTo(o2.key);
+        }
+    };
+    public static Comparator<GroupEntry> KeyDescendingComparator = new Comparator<GroupEntry>(){
+        @Override
+        public int compare(GroupEntry o1, GroupEntry o2) {
+            if(o1.key == null || o2.key == null) {
+                return 0;
+            } else if(o1.key == null) {
+                return 1;
+            } else if(o2.key == null) {
+                return -1;
+            }
+            return o2.key.compareTo(o1.key);
+        }
+    };
+
+    /**
+     * Value값이 NULL일 경우, 0일수도 있으므로, 정렬순서에 맞게처리.
+     * */
+    public static Comparator<GroupEntry> ValueAscendingComparator = new Comparator<GroupEntry>(){
+        @Override
+        public int compare(GroupEntry o1, GroupEntry o2) {
+            if(o1.groupingValue[0] == null && o2.groupingValue[0] == null) {
+                return 0;
+            } else if(o1.groupingValue[0] == null) {
+                return -1;
+            } else if(o2.groupingValue[0] == null) {
+                return 1;
+            }
+            return o1.groupingValue[0].compareTo(o2.groupingValue[0]);
+        }
+    };
+    public static Comparator<GroupEntry> ValueDescendingComparator = new Comparator<GroupEntry>(){
+        @Override
+        public int compare(GroupEntry o1, GroupEntry o2) {
+            if(o1.groupingValue[0] == null && o2.groupingValue[0] == null) {
+                return 0;
+            } else if(o1.groupingValue[0] == null) {
+                return 1;
+            } else if(o2.groupingValue[0] == null) {
+                return -1;
+            }
+            return o2.groupingValue[0].compareTo(o1.groupingValue[0]);
+        }
+    };
 
 	public void sort(int sortOrder) {
 		if(entryList == null){
