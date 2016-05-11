@@ -407,9 +407,9 @@ public class QueryParser {
 			return Group.SORT_KEY_ASC;
 		} else if (string.equalsIgnoreCase("KEY_DESC")) {
 			return Group.SORT_KEY_DESC;
-		} else if (string.equalsIgnoreCase("COUNT_ASC")) {
+        } else if (string.equalsIgnoreCase("COUNT_ASC") || string.equalsIgnoreCase("VALUE_ASC")) {
 			return Group.SORT_VALUE_ASC;
-		} else if (string.equalsIgnoreCase("COUNT_DESC")) {
+        } else if (string.equalsIgnoreCase("COUNT_DESC") || string.equalsIgnoreCase("VALUE_DESC")) {
 			return Group.SORT_VALUE_DESC;
 		}
 		return 0;
