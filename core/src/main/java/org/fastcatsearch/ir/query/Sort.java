@@ -30,7 +30,7 @@ public class Sort {
 	public Sort(String fieldIndexId){
 		this(fieldIndexId, true, false);
 	}
-	public Sort(String fieldIndexId, boolean asc){ this(fieldIndexId, true, false); }
+	public Sort(String fieldIndexId, boolean asc){ this(fieldIndexId, asc, false); }
 	public Sort(String fieldIndexId, boolean asc, boolean shuffle) {
 		this.fieldIndexId = fieldIndexId.toUpperCase();
 		this.asc = asc;
