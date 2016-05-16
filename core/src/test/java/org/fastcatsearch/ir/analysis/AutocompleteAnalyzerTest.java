@@ -16,7 +16,7 @@ public class AutocompleteAnalyzerTest {
     private static final Logger logger = LoggerFactory.getLogger(AutocompleteAnalyzerTest.class);
 
     @Test
-    public void testTokenizer() {
+    public void testTokenizer() throws IOException {
 
         try {
             String str = "안녕하세용안녕하세용안녕하세용안ㄴ";
@@ -32,9 +32,11 @@ public class AutocompleteAnalyzerTest {
                 logger.debug("count: {}", i);
             }
         } catch (IOException e) {
-            logger.error("IOException: " + e);
+            logger.error("IOException: ", e);
+            throw e;
         } catch (ArrayIndexOutOfBoundsException e) {
             logger.error("ArrayIndexOutOfBoundsException: " + e);
+            throw e;
         }
     }
 }

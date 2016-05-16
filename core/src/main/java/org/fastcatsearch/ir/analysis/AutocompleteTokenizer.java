@@ -51,26 +51,11 @@ public class AutocompleteTokenizer extends Tokenizer {
     public boolean incrementToken() throws IOException {
         clearAttributes();
         if(pos < tokenList.length) {
-
-            /*
-                2016-05-13 전제현 수정
-                buf보다 token을 먼저 선언한 뒤,
-                termAtt의 termBuffer 길이가 token 길이보다 짧을 경우 termBuffer를 리사이즈 한다.
-                그 뒤에 buf를 선언한다.
-
-                -- 기존 코드 --
-                char[] buf = termAtt.buffer();
-                String token = tokenList[pos];
-            */
-            String token = tokenList[pos];
-            while (termAtt.buffer().length < token.length()) {
-                termAtt.resizeBuffer(token.length());
-            }
-
             char[] buf = termAtt.buffer();
-            /* 수정 끝 */
+
+            String token = tokenList[pos];
             if(buf.length < token.length()) {
-                termAtt.resizeBuffer(token.length());
+                buf = termAtt.resizeBuffer(token.length());
             }
             for(int i = 0; i< token.length(); i++) {
                 buf[i] = token.charAt(i);
