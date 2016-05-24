@@ -12,11 +12,20 @@ public class WordCombination {
      * 긴 조합부터 후보를 뽑아낸다. 단어 순서는 지켜준다. 단어순서가 없는 permutation은 연산비용이 너무 많이 들게 되므로 지원하지 않음.
      * */
     public static List<WordEntry> getDescCombination(List<String> candidates) {
-        return getDescCombination(candidates, null);
+        return getDescCombination(candidates, null, 4, 10);
     }
-    public static List<WordEntry> getDescCombination(List<String> candidates, String delimiter) {
+    public static List<WordEntry> getDescCombination(List<String> candidates, String delimiter, int maxCombinationSize, int maxCandidateSize) {
         List<WordEntry> result = new ArrayList<WordEntry>();
-        int SIZE = candidates.size();
+
+        /*
+        * candidates 길이가 10을 넘을 경우 그 이상의 Term들은 제거한다.
+        * */
+        for (int i = candidates.size() - 1; i >= maxCandidateSize; i--) {
+            candidates.remove(i);
+        }
+
+        int SIZE = Math.min(candidates.size(), maxCombinationSize);
+
         for(int m = SIZE; m > 0; m--) {
             //기준위치를 앞에서 부터 한칸씩 이동시키며 후보를 찾는다.
             for(int p = 0; p < SIZE; p++) {
