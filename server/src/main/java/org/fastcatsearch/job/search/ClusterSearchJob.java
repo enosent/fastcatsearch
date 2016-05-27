@@ -293,7 +293,7 @@ public class ClusterSearchJob extends Job {
 
 			ResultModifier resultModifier = meta.resultModifier();
 			if(resultModifier != null){
-				searchResult = resultModifier.modify(searchResult);
+				searchResult = resultModifier.modify(searchResult, searchKeyword, queryMap.get("cn"), queryMap.get("ht"));
 			}
 			
 			if(!noCache && realSize > 0){
