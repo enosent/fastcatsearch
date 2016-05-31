@@ -175,6 +175,14 @@ final class CSVTokenizer extends Tokenizer {
 				baseOffset = nextOffset;
 				nextOffset += rlen;
 				lastReaded = currentPos + rlen;
+
+				/*
+				* 2016-05-31 전제현
+				* CSV 분석 시 분석 대상 텍스트 맨 뒤에 콤마가 존재할 시 해당 부분은 분석에서 제외한다.
+				* */
+				while (this.cbuf[lastReaded - 1] == ',') {
+					lastReaded--;
+				}
 				continue;
 			}
 		}
