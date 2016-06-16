@@ -7,6 +7,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.fastcatsearch.ir.analysis.AutocompleteAnalyzer;
 import org.fastcatsearch.ir.analysis.DefaultAnalyzerFactory;
 import org.fastcatsearch.ir.analysis.NGramWordAnalyzer;
+import org.fastcatsearch.ir.analysis.NGram13WordAnalyzer;
 import org.fastcatsearch.ir.analysis.PrimaryWordAnalyzer;
 import org.fastcatsearch.ir.dic.Dictionary;
 import org.fastcatsearch.ir.dic.PreResult;
@@ -37,6 +38,8 @@ public class BasicAnalysisPlugin extends AnalysisPlugin<CharVector, PreResult<Ch
 		registerAnalyzer(analyzerFactoryMap, "standard", "Standard Analyzer", new DefaultAnalyzerFactory(StandardAnalyzer.class));
 		
 		registerAnalyzer(analyzerFactoryMap, "ngram", "NGram Analyzer", new DefaultAnalyzerFactory(NGramWordAnalyzer.class));
+
+		registerAnalyzer(analyzerFactoryMap, "ngram13", "NGram13 Analyzer", new DefaultAnalyzerFactory(NGram13WordAnalyzer.class));
 		
 		registerAnalyzer(analyzerFactoryMap, "primary", "Primary Word Analyzer", new DefaultAnalyzerFactory(PrimaryWordAnalyzer.class));
 		
