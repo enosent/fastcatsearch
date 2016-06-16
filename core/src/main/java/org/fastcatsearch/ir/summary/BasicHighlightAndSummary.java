@@ -139,9 +139,10 @@ public class BasicHighlightAndSummary implements HighlightAndSummary {
 					&& termAttribute != null) {
 				termString = termAttribute.charsRef().toString();
 			}
-			
-			logger.trace("termString:{} [{}~{}]", termString, offsetAttribute.startOffset(), offsetAttribute.endOffset());
-			
+
+            if(offsetAttribute != null) {
+                logger.trace("termString:{} [{}~{}]", termString, offsetAttribute.startOffset(), offsetAttribute.endOffset());
+            }
 			float score = 0f;
 			
 			if(featureAttribute!=null) {
@@ -173,7 +174,7 @@ public class BasicHighlightAndSummary implements HighlightAndSummary {
 				
 				//refterm 은 1글자 이하의 텀에서는 의미가 없음
 				if(termString.length() > 1) {
-					if(logger.isTraceEnabled()) {
+					if(logger.isTraceEnabled() && offsetAttribute != null) {
 						logger.trace("charTermAttribute : {} : [{}/{}]", termString, 
 								offsetAttribute.startOffset(), termAttribute.charsRef().length());
 					}
