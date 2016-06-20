@@ -1,12 +1,12 @@
 package org.fastcatsearch.ir.analysis;
 
-import java.io.IOException;
-import java.io.StringReader;
-
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.AnalyzerOption;
 import org.apache.lucene.analysis.tokenattributes.CharsRefTermAttribute;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.io.StringReader;
 
 public class NGramAnalyzerTest {
 
@@ -88,5 +88,21 @@ public class NGramAnalyzerTest {
 			System.out.println(i2++ +">>>"+charTermAttribute2.toString()+"<");
 		}
 		
+	}
+
+	@Test
+	public void testTokenizerWithEdge() throws IOException {
+		int minGram = 1;
+		int maxGram = 3;
+		boolean includeEdge = true;
+		String str = "대형폐가전제품";
+		StringReader input = new StringReader(str);
+		NGramWordTokenizer t = new NGramWordTokenizer(input, minGram, maxGram, includeEdge);
+		t.reset();
+		CharsRefTermAttribute charTermAttribute = t.getAttribute(CharsRefTermAttribute.class);
+		int i = 1;
+		while(t.incrementToken()) {
+			System.out.println(i++ +">"+charTermAttribute.toString()+"<");
+		}
 	}
 }

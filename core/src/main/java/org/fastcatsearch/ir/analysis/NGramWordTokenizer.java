@@ -1,11 +1,11 @@
 package org.fastcatsearch.ir.analysis;
 
-import java.io.IOException;
-import java.io.Reader;
-
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharsRefTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
+
+import java.io.IOException;
+import java.io.Reader;
 
 public class NGramWordTokenizer extends Tokenizer {
 	private int minGram;
@@ -17,6 +17,10 @@ public class NGramWordTokenizer extends Tokenizer {
 
 	private int nGram;
 	private int pos;
+
+	private boolean includeEdge;
+	private char edgeChar = '\0';
+
 	private final CharsRefTermAttribute termAttribute = addAttribute(CharsRefTermAttribute.class);
     private final PositionIncrementAttribute positionAttribute = addAttribute(PositionIncrementAttribute.class);
 
@@ -25,13 +29,19 @@ public class NGramWordTokenizer extends Tokenizer {
 	}
 
 	public NGramWordTokenizer(Reader input, int minGram, int maxGram) {
+		this(input, minGram, maxGram, false);
+	}
+	public NGramWordTokenizer(Reader input, int minGram, int maxGram, boolean includeEdge) {
+		this(input, minGram, maxGram, includeEdge, '\0');
+	}
+	public NGramWordTokenizer(Reader input, int minGram, int maxGram, boolean includeEdge, char edgeChar) {
 		super(input);
 		this.minGram = minGram;
 		this.maxGram = maxGram;
+		this.includeEdge = includeEdge;
+		this.edgeChar = edgeChar;
 		readBuffer = new char[1024];
 		nGram = minGram;
-
-		
 	}
 	
 	@Override
@@ -55,19 +65,34 @@ public class NGramWordTokenizer extends Tokenizer {
 		while ((n = input.read(readBuffer)) != -1) {
 			if (n > 0) {
 				if (charBuffer == null) {
-					charBuffer = new char[n];
-					System.arraycopy(readBuffer, 0, charBuffer, 0, n);
+					if(includeEdge){
+						charBuffer = new char[n + 1];
+						//첫 번째 char에  edgeChar를 넣어준다.
+						charBuffer[0] = edgeChar;
+						System.arraycopy(readBuffer, 0, charBuffer, 1, n);
+					} else {
+						charBuffer = new char[n];
+						System.arraycopy(readBuffer, 0, charBuffer, 0, n);
+					}
 				} else {
-					char[] newCharBuffer = new char[charBuffer.length + n];
-					System.arraycopy(charBuffer, 0, newCharBuffer, 0, charBuffer.length);
-					System.arraycopy(readBuffer, 0, newCharBuffer, charBuffer.length, n);
-					charBuffer = newCharBuffer;
+					if(includeEdge){
+						char[] newCharBuffer = new char[charBuffer.length + n];
+						System.arraycopy(charBuffer, 0, newCharBuffer, 0, charBuffer.length);
+						System.arraycopy(readBuffer, 0, newCharBuffer, charBuffer.length, n);
+						charBuffer = newCharBuffer;
+					}
 				}
 			}
 		}
-		
-		
-		if(charBuffer!=null) {
+
+
+		if (charBuffer != null) {
+			if(includeEdge){
+				char[] newCharBuffer = new char[charBuffer.length + 1];
+				System.arraycopy(charBuffer, 0, newCharBuffer, 0, charBuffer.length);
+				newCharBuffer[charBuffer.length] = edgeChar;
+				charBuffer = newCharBuffer;
+			}
 			length = charBuffer.length; 
 		} else {
 			length = 0;
@@ -82,7 +107,7 @@ public class NGramWordTokenizer extends Tokenizer {
 		length = 0;
 		if(charBuffer != null) {
 			for (int i = 0; i < charBuffer.length; i++) {
-				if (charBuffer[i] <= 32) {
+				if (charBuffer[i] <= 32 && charBuffer[i] > 32) {
 					continue;
 				}
 	
@@ -103,7 +128,16 @@ public class NGramWordTokenizer extends Tokenizer {
 
 			LABEL_POS:
 			while (nGram <= maxGram) {
-
+				if(includeEdge) {
+					if(nGram == 1 && pos == 0) {
+						nGram++;
+						continue;
+					}
+					if(nGram == 1 && pos == length - 1) {
+						nGram++;
+						continue;
+					}
+				}
 				if (pos + nGram <= length) {
 //					System.out.println(new String(charBuffer, pos, nGram) + ">>>>>>" + charBuffer[pos] + " : " + charBuffer[pos + nGram - 1]);
 					for(int i = pos; i < pos + nGram ; i++) {
