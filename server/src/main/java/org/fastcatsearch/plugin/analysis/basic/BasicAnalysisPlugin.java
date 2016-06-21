@@ -4,11 +4,7 @@ import org.apache.lucene.analysis.core.CSVAnalyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.fastcatsearch.ir.analysis.AutocompleteAnalyzer;
-import org.fastcatsearch.ir.analysis.DefaultAnalyzerFactory;
-import org.fastcatsearch.ir.analysis.NGramWordAnalyzer;
-import org.fastcatsearch.ir.analysis.NGram13WordAnalyzer;
-import org.fastcatsearch.ir.analysis.PrimaryWordAnalyzer;
+import org.fastcatsearch.ir.analysis.*;
 import org.fastcatsearch.ir.dic.Dictionary;
 import org.fastcatsearch.ir.dic.PreResult;
 import org.fastcatsearch.ir.io.CharVector;
@@ -39,7 +35,15 @@ public class BasicAnalysisPlugin extends AnalysisPlugin<CharVector, PreResult<Ch
 		
 		registerAnalyzer(analyzerFactoryMap, "ngram", "NGram Analyzer", new DefaultAnalyzerFactory(NGramWordAnalyzer.class));
 
-		registerAnalyzer(analyzerFactoryMap, "ngram13", "NGram13 Analyzer", new DefaultAnalyzerFactory(NGram13WordAnalyzer.class));
+		registerAnalyzer(analyzerFactoryMap, "ngram15", "NGram15 Analyzer", new DefaultAnalyzerFactory(NGram15WordAnalyzer.class));
+
+		registerAnalyzer(analyzerFactoryMap, "bygram", "ByGram Analyzer", new DefaultAnalyzerFactory(ByGramWordAnalyzer.class));
+
+		registerAnalyzer(analyzerFactoryMap, "trigram", "TriGram Analyzer", new DefaultAnalyzerFactory(TriGramWordAnalyzer.class));
+
+		registerAnalyzer(analyzerFactoryMap, "fourgram", "FourGram Analyzer", new DefaultAnalyzerFactory(FourGramWordAnalyzer.class));
+
+		registerAnalyzer(analyzerFactoryMap, "fivegram", "FiveGram Analyzer", new DefaultAnalyzerFactory(FiveGramWordAnalyzer.class));
 		
 		registerAnalyzer(analyzerFactoryMap, "primary", "Primary Word Analyzer", new DefaultAnalyzerFactory(PrimaryWordAnalyzer.class));
 		
