@@ -78,11 +78,11 @@
 				<artifactId>netty</artifactId>
 				<version>3.9.9.Final</version>
 			</dependency>
-			<dependency>
-				<groupId>org.codeartisans</groupId>
-				<artifactId>org.json</artifactId>
-				<version>20130213</version>
-			</dependency>
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>20160212</version>
+            </dependency>
 			<dependency>
 				<groupId>org.mortbay.jetty</groupId>
 				<artifactId>jsp-2.1</artifactId>
@@ -140,10 +140,10 @@
 			<groupId>dom4j</groupId>
 			<artifactId>dom4j</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.codeartisans</groupId>
-			<artifactId>org.json</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
