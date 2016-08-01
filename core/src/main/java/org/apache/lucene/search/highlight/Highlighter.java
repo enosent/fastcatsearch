@@ -48,7 +48,6 @@ public class Highlighter {
 	private Fragmenter textFragmenter = new SimpleFragmenter();
 	private Scorer fragmentScorer = null;
 	
-	//private Map<Integer, Integer> deltaList;
 	private Set<TermSorted> termSet;
 
 	public Highlighter(Scorer fragmentScorer) {
@@ -63,7 +62,6 @@ public class Highlighter {
 		this.formatter = formatter;
 		this.encoder = encoder;
 		this.fragmentScorer = fragmentScorer;
-		//this.deltaList = new HashMap<Integer, Integer>();
 		this.termSet = new TreeSet<TermSorted>();
 	}
 
@@ -201,7 +199,6 @@ public class Highlighter {
 			int[] startOffset = new int[1];
 			int[] endOffset = new int[1];
 			int[] lastEndOffset = new int[] { 0 };
-			int[] tagLengthDelta = new int[] { 0 };
 			textFragmenter.start(text, tokenStream);
 
 			TokenGroup tokenGroup = new TokenGroup(tokenStream);
@@ -213,13 +210,10 @@ public class Highlighter {
 				
 				if(tokenGroup.isDistinct()) {
 					currentFrag = markUp(offsetAtt, termAtt, tokenGroup, text, tokenText,
-							startOffset, endOffset, lastEndOffset, tagLengthDelta, newText,
-							docFrags, currentFrag, true);
+						startOffset, endOffset, lastEndOffset, newText,
+						docFrags, currentFrag, true);
 				}
 				tokenGroup.addToken(fragmentScorer.getTokenScore());
-				// if(lastEndOffset>maxDocBytesToAnalyze) {
-				// break;
-				// }
 				
 				//for additional-terms
 				if(addAtt != null && addAtt.size() > 0) {
@@ -228,16 +222,16 @@ public class Highlighter {
 						String str = iter.next();
 						if(tokenGroup.isDistinct()) {
 							currentFrag = markUp(offsetAtt, str, tokenGroup, text, tokenText,
-							startOffset, endOffset, lastEndOffset, tagLengthDelta, newText,
-							docFrags, currentFrag, true);
+								startOffset, endOffset, lastEndOffset, newText,
+								docFrags, currentFrag, true);
 						}
 					}
 				}
 			}
 			currentFrag.setScore(fragmentScorer.getFragmentScore());
 			markUp(offsetAtt, termAtt, tokenGroup, text, tokenText,
-					startOffset, endOffset, lastEndOffset, tagLengthDelta,
-					newText, docFrags, currentFrag, false);
+				startOffset, endOffset, lastEndOffset, newText, 
+				docFrags, currentFrag, false);
 
 			// Test what remains of the original text beyond the point where we stopped analyzing
 			if (
@@ -246,7 +240,9 @@ public class Highlighter {
 			// and that text is not too large...
 					(text.length() <= maxDocCharsToAnalyze)) {
 				// append it to the last fragment
-				newText.append(encoder.encodeText(text.substring(lastEndOffset[0])));
+				String tmpStr = encoder.encodeText(text.substring(lastEndOffset[0]));
+				newText.append(tmpStr);
+				termSet.add(new TermSorted(tmpStr, null, lastEndOffset[0], text.length() - 1));
 			}
 			
 			newText.setLength(0);
@@ -308,7 +304,7 @@ public class Highlighter {
 	public TextFragment markUp(OffsetAttribute offsetAtt, Object termAtt,
 			TokenGroup tokenGroup, String text, String[] tokenText,
 			int[] startOffset, int[] endOffset, int[] lastEndOffset,
-			int[] tagLengthDelta, StringBuilder newText,
+			StringBuilder newText,
 			ArrayList<TextFragment> docFrags, TextFragment currentFrag, boolean isDistinct)
 			throws InvalidTokenOffsetsException {
 		
@@ -326,29 +322,8 @@ public class Highlighter {
 			tokenText[0] = text.substring(startOffset[0], endOffset[0]);
 			
 			String markedUpText = formatter.highlightTerm(encoder.encodeText(tokenText[0]), tokenGroup);
-		
-			//차후 하이라이팅 태그에 대한 오프셋 밀림에 대한 차이값을 가지고 있는 테이블
-//			logger.trace("tokenText:{} / markedUpText:{}", tokenText[0], markedUpText);
-//			if(tokenText[0].length() != markedUpText.length()) {
-//				logger.trace("tokenText:{} / markedUp:{} / startOffset:{} / tagLength:{} ", tokenText[0], markedUpText, startOffset[0], tagLengthDelta[0]);
-//				if(!deltaList.containsKey(startOffset[0])) {
-//					deltaList.put(startOffset[0], tagLengthDelta[0]);
-//					tagLengthDelta[0] += markedUpText.length() - tokenText[0].length();
-//				}
-//			}
 			
 			logger.trace("text:{} / newText:{} / token:{} / markedUp:{} / startOffset:{} / lastEndOffset:{}", text, newText, tokenText, markedUpText, startOffset, lastEndOffset);
-			// store any whitespace etc from between this and last group
-//			if (startOffset[0] > lastEndOffset[0]) {
-//				newText.append(encoder.encodeText(text.substring(lastEndOffset[0], startOffset[0])));
-//			} else if(startOffset[0] < lastEndOffset[0]){
-//				if(deltaList.containsKey(startOffset[0])) {
-//					logger.trace("offset:{} / {}", startOffset[0], deltaList.get(startOffset[0]));
-//					newText.setLength(startOffset[0] + deltaList.get(startOffset[0]));
-//				} else {
-//					newText.setLength(startOffset[0]);
-//				}
-//			}
 
 			if (startOffset[0] > lastEndOffset[0]) {
 				newText.append(encoder.encodeText(text.substring(lastEndOffset[0], startOffset[0])));
@@ -510,21 +485,54 @@ public class Highlighter {
 		StringBuilder ret = new StringBuilder();
 		//trimming...
 		TermSorted prev = null;
-		for(TermSorted term: termSet) {
-			if(prev != null && prev.edOffset() > term.stOffset()) {
-				String prevTerm = prev.orgTerm();
-				String prevTagTerm = prev.tagTerm();
-				int delta = prev.edOffset() - term.stOffset();
-				if(prevTerm.length() > delta) {
-					prevTerm = prevTerm.substring(0, prevTerm.length() - delta);
-					prev.orgTerm(prevTerm);
-					if(prevTagTerm != null) {
-						prevTagTerm = formatter.highlightTerm(prevTerm, tokenGroup);
-						prev.tagTerm(prevTagTerm);
+		while(true) {
+			TermSorted item = null;
+			for(TermSorted term: termSet) {
+				item = null;
+				if(prev != null && prev.edOffset() >= term.stOffset()) {
+					String termStr = null;
+					int delta = prev.edOffset() - term.stOffset();
+					if(delta > 0) {
+						//nested string..
+						if (prev.tagTerm() == null) {
+							termStr = prev.orgTerm();
+							//cut by different
+							if (termStr.length() >= delta) {
+								prev.orgTerm(termStr.substring(0, termStr.length() - delta))
+									.edOffset(term.stOffset());
+							}
+							//
+							if (prev.edOffset() > term.edOffset()) {
+								item = new TermSorted(termStr.substring(term.edOffset()), null, term.edOffset(), prev.edOffset());
+								break;
+							}
+						} else {
+							//cut current term when previous term is highlighted
+							if (prev.edOffset() > term.edOffset()) {
+								//when previous term contains whole current term
+								//current term will useless
+								term.orgTerm("").tagTerm(null).edOffset(term.stOffset());
+							} else {
+								//when nested string (previous term/ current term)
+								//cut current term
+								termStr = term.orgTerm();
+								termStr = termStr.substring(delta);
+								if (term.tagTerm() != null) {
+									term.tagTerm(formatter.highlightTerm(termStr, tokenGroup));
+								}
+								term.stOffset(prev.edOffset());
+							}
+						}
 					}
 				}
+				//deleted term..
+				if(!"".equals(term.orgTerm())) {
+					prev = term;
+				}
 			}
-			prev = term;
+			if(item == null) {
+				break;
+			}
 		}
 		//merging...
 		for(TermSorted term: termSet) {
@@ -577,7 +585,7 @@ class TermSorted implements Comparable<TermSorted> {
 			
 			ret = stOffset - o.stOffset;
 			
-			if ( ret == 0 ) { ret = edOffset - o.edOffset; }
+			if ( ret == 0 ) { ret = o.edOffset - edOffset; }
 			
 			if ( ret == 0 ) { ret = orgTerm.compareTo(o.orgTerm); }
 			
@@ -591,12 +599,12 @@ class TermSorted implements Comparable<TermSorted> {
 	}
 
 	public String orgTerm() { return orgTerm; }
-	public void orgTerm(String orgTerm) { this.orgTerm = orgTerm; }
+	public TermSorted orgTerm(String orgTerm) { this.orgTerm = orgTerm; return this; }
 	public String tagTerm() { return tagTerm; }
-	public void tagTerm(String tagTerm) { this.tagTerm = tagTerm; }
+	public TermSorted tagTerm(String tagTerm) { this.tagTerm = tagTerm; return this; }
 	public int stOffset() { return stOffset; }
-	public void stOffset(int stOffset) { this.stOffset = stOffset; }
+	public TermSorted stOffset(int stOffset) { this.stOffset = stOffset; return this; }
 	public int edOffset() { return edOffset; }
-	public void edOffset(int edOffset) { this.edOffset = edOffset; }
-	@Override public String toString() { return orgTerm; }
+	public TermSorted edOffset(int edOffset) { this.edOffset = edOffset; return this; }
+	@Override public String toString() { return (tagTerm!=null?tagTerm:orgTerm)+":"+stOffset+"~"+edOffset; }
 }
