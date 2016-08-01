@@ -29,9 +29,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Class used to markup highlighted terms found in the best sections of a text, using configurable {@link Fragmenter},
@@ -48,7 +48,8 @@ public class Highlighter {
 	private Fragmenter textFragmenter = new SimpleFragmenter();
 	private Scorer fragmentScorer = null;
 	
-	private Map<Integer, Integer> deltaList;
+	//private Map<Integer, Integer> deltaList;
+	private Set<TermSorted> termSet;
 
 	public Highlighter(Scorer fragmentScorer) {
 		this(new SimpleHTMLFormatter(), fragmentScorer);
@@ -62,7 +63,8 @@ public class Highlighter {
 		this.formatter = formatter;
 		this.encoder = encoder;
 		this.fragmentScorer = fragmentScorer;
-		this.deltaList = new HashMap<Integer, Integer>();
+		//this.deltaList = new HashMap<Integer, Integer>();
+		this.termSet = new TreeSet<TermSorted>();
 	}
 
 	/**
@@ -246,6 +248,9 @@ public class Highlighter {
 				// append it to the last fragment
 				newText.append(encoder.encodeText(text.substring(lastEndOffset[0])));
 			}
+			
+			newText.setLength(0);
+			newText.append(mergeTerms(termSet, tokenGroup));
 
 			currentFrag.textEndPos = newText.length();
 
@@ -323,27 +328,36 @@ public class Highlighter {
 			String markedUpText = formatter.highlightTerm(encoder.encodeText(tokenText[0]), tokenGroup);
 		
 			//차후 하이라이팅 태그에 대한 오프셋 밀림에 대한 차이값을 가지고 있는 테이블
-			logger.trace("tokenText:{} / markedUpText:{}", tokenText[0], markedUpText);
-			if(tokenText[0].length() != markedUpText.length()) {
-				logger.trace("tokenText:{} / markedUp:{} / startOffset:{} / tagLength:{} ", tokenText[0], markedUpText, startOffset[0], tagLengthDelta[0]);
-				if(!deltaList.containsKey(startOffset[0])) {
-					deltaList.put(startOffset[0], tagLengthDelta[0]);
-					tagLengthDelta[0] += markedUpText.length() - tokenText[0].length();
-				}
-			}
+//			logger.trace("tokenText:{} / markedUpText:{}", tokenText[0], markedUpText);
+//			if(tokenText[0].length() != markedUpText.length()) {
+//				logger.trace("tokenText:{} / markedUp:{} / startOffset:{} / tagLength:{} ", tokenText[0], markedUpText, startOffset[0], tagLengthDelta[0]);
+//				if(!deltaList.containsKey(startOffset[0])) {
+//					deltaList.put(startOffset[0], tagLengthDelta[0]);
+//					tagLengthDelta[0] += markedUpText.length() - tokenText[0].length();
+//				}
+//			}
 			
 			logger.trace("text:{} / newText:{} / token:{} / markedUp:{} / startOffset:{} / lastEndOffset:{}", text, newText, tokenText, markedUpText, startOffset, lastEndOffset);
 			// store any whitespace etc from between this and last group
+//			if (startOffset[0] > lastEndOffset[0]) {
+//				newText.append(encoder.encodeText(text.substring(lastEndOffset[0], startOffset[0])));
+//			} else if(startOffset[0] < lastEndOffset[0]){
+//				if(deltaList.containsKey(startOffset[0])) {
+//					logger.trace("offset:{} / {}", startOffset[0], deltaList.get(startOffset[0]));
+//					newText.setLength(startOffset[0] + deltaList.get(startOffset[0]));
+//				} else {
+//					newText.setLength(startOffset[0]);
+//				}
+//			}
+
 			if (startOffset[0] > lastEndOffset[0]) {
 				newText.append(encoder.encodeText(text.substring(lastEndOffset[0], startOffset[0])));
-			} else if(startOffset[0] < lastEndOffset[0]){
-				if(deltaList.containsKey(startOffset[0])) {
-					logger.trace("offset:{} / {}", startOffset[0], deltaList.get(startOffset[0]));
-					newText.setLength(startOffset[0] + deltaList.get(startOffset[0]));
-				} else {
-					newText.setLength(startOffset[0]);
-				}
+				termSet.add(new TermSorted(encoder.encodeText(text.substring(lastEndOffset[0], startOffset[0])), null, lastEndOffset[0], startOffset[0]));
 			}
+			termSet.add(new TermSorted(tokenText[0], markedUpText, startOffset[0], endOffset[0]));
+
+			logger.trace("TERMSET:{}", termSet);
+
 			newText.append(markedUpText);
 			lastEndOffset[0] = Math.max(endOffset[0], lastEndOffset[0]);
 			
@@ -491,6 +505,37 @@ public class Highlighter {
 	public void setEncoder(Encoder encoder) {
 		this.encoder = encoder;
 	}
+
+	public String mergeTerms(Set<TermSorted> termSet, TokenGroup tokenGroup) {
+		StringBuilder ret = new StringBuilder();
+		//trimming...
+		TermSorted prev = null;
+		for(TermSorted term: termSet) {
+			if(prev != null && prev.edOffset() > term.stOffset()) {
+				String prevTerm = prev.orgTerm();
+				String prevTagTerm = prev.tagTerm();
+				int delta = prev.edOffset() - term.stOffset();
+				if(prevTerm.length() > delta) {
+					prevTerm = prevTerm.substring(0, prevTerm.length() - delta);
+					prev.orgTerm(prevTerm);
+					if(prevTagTerm != null) {
+						prevTagTerm = formatter.highlightTerm(prevTerm, tokenGroup);
+						prev.tagTerm(prevTagTerm);
+					}
+				}
+			}
+			prev = term;
+		}
+		//merging...
+		for(TermSorted term: termSet) {
+			if(term.tagTerm()==null) {
+				ret.append(term.orgTerm());
+			} else {
+				ret.append(term.tagTerm());
+			}
+		}
+		return ret.toString();
+	}
 }
 
 class FragmentQueue extends PriorityQueue<TextFragment> {
@@ -505,4 +550,53 @@ class FragmentQueue extends PriorityQueue<TextFragment> {
 		else
 			return fragA.getScore() < fragB.getScore();
 	}
+}
+
+
+class TermSorted implements Comparable<TermSorted> {
+	private String orgTerm;
+	private String tagTerm;
+	private int stOffset;
+	private int edOffset;
+
+	public TermSorted(String orgTerm, String tagTerm, int stOffset, int edOffset) {
+		this.orgTerm = orgTerm;
+		this.tagTerm = null;
+		if(tagTerm!=null && !tagTerm.equals(orgTerm)) {
+			this.tagTerm = tagTerm;
+		}
+		this.stOffset = stOffset;
+		this.edOffset = edOffset;
+	}
+	
+	@Override
+	public int compareTo(TermSorted o) {
+		int ret = -1;
+		
+		if ( o != null ) {
+			
+			ret = stOffset - o.stOffset;
+			
+			if ( ret == 0 ) { ret = edOffset - o.edOffset; }
+			
+			if ( ret == 0 ) { ret = orgTerm.compareTo(o.orgTerm); }
+			
+			if ( ret > 0 ) { 
+				ret = 1;
+			} else if ( ret < 0 ) {
+				ret = -1;
+			}
+		}
+		return ret;
+	}
+
+	public String orgTerm() { return orgTerm; }
+	public void orgTerm(String orgTerm) { this.orgTerm = orgTerm; }
+	public String tagTerm() { return tagTerm; }
+	public void tagTerm(String tagTerm) { this.tagTerm = tagTerm; }
+	public int stOffset() { return stOffset; }
+	public void stOffset(int stOffset) { this.stOffset = stOffset; }
+	public int edOffset() { return edOffset; }
+	public void edOffset(int edOffset) { this.edOffset = edOffset; }
+	@Override public String toString() { return orgTerm; }
 }
