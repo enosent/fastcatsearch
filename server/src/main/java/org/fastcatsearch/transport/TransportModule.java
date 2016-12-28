@@ -347,7 +347,7 @@ public class TransportModule extends AbstractModule {
 	                NodeChannels existing = connectedNodes.putIfAbsent(node, nodeChannels);
 	                if (existing != null) {
 	                    // we are already connected to a node, close this ones
-	                    nodeChannels.close();
+						existing.close();
 	                } else {
 	                    if (logger.isDebugEnabled()) {
 	                        logger.debug("connected to node [{}]", node);
