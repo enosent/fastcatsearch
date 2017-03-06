@@ -112,7 +112,7 @@ public class PrimaryKeyIndexesReader implements Cloneable {
 			for (int j = 0; j < pkFieldSettingList.length; j++) {
 				FieldSetting fieldSetting = pkFieldSettingList[j];
 				Field field = fieldSetting.createIndexableField(pkValues[j]);
-				field.writeTo(pkOutput);
+				field.writeFixedDataTo(pkOutput);
 			}
 
 			docNo = pkReader.get(pkOutput.array(), 0, (int) pkOutput.position());
@@ -124,7 +124,7 @@ public class PrimaryKeyIndexesReader implements Cloneable {
 
 		OperatedClause idOperatedClause = null;
 		if (m > 0) {
-			idOperatedClause = new TermOperatedClause("_PK", "", new DataPostingReader(new CharVector(termString), 0, weight, termDocList, m));
+			idOperatedClause = new TermOperatedClause(PrimaryKeySetting.ID, "", new DataPostingReader(new CharVector(termString), 0, weight, termDocList, m));
 		}
 
 		return idOperatedClause;

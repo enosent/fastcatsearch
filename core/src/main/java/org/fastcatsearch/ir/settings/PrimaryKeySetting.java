@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlElement;
 
 
 public class PrimaryKeySetting {
-	private static final String ID = "_PK";
+	public static final String ID = "_PK";
 	private String id;
 	private List<RefSetting> fieldList;
 
